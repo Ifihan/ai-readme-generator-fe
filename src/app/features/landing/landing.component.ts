@@ -1,5 +1,5 @@
 // src/app/features/landing/landing.component.ts
-import { Component, OnInit, PLATFORM_ID, Inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, Inject, ViewChild, ElementRef, AfterViewInit, HostListener } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { GithubService } from '../../core/services/github.service';
@@ -22,6 +22,9 @@ export class LandingComponent implements OnInit, AfterViewInit {
   demoImageLoaded = false;
   footerImageLoaded = false;
   
+  // Mobile menu state
+  mobileMenuOpen = false;
+  
   // Current year for copyright
   currentYear = new Date().getFullYear();
 
@@ -34,7 +37,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
     {
       title: 'AI-Powered Generation',
       description: 'Create comprehensive READMEs based on your code',
-      icon: 'lightbulb' // Replaced sparkles with lightbulb
+      icon: 'lightbulb' // Using lightbulb instead of sparkles
     },
     {
       title: 'Markdown Export',
@@ -60,7 +63,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
       number: 3,
       title: 'Generate README',
       description: 'Our AI will analyze your code and generate a comprehensive README',
-      icon: 'lightbulb' // Replaced sparkles with lightbulb
+      icon: 'lightbulb' // Using lightbulb instead of sparkles
     },
     {
       number: 4,
@@ -162,6 +165,9 @@ export class LandingComponent implements OnInit, AfterViewInit {
             behavior: 'smooth'
           });
           
+          // Close mobile menu if open
+          this.closeMobileMenu();
+          
           // Highlight the active nav link
           navLinks.forEach(navLink => {
             navLink.classList.remove('active');
@@ -204,6 +210,55 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
   signInWithGitHub(): void {
     this.authService.loginWithGitHub();
+  }
+  
+  // Mobile menu methods
+  toggleMobileMenu(): void {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+    
+    // Prevent scrolling when menu is open
+    if (this.mobileMenuOpen) {
+      document.body.classList.add('menu-open');
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.classList.remove('menu-open');
+      document.body.style.overflow = '';
+    }
+  }
+  
+  closeMobileMenu(): void {
+    if (this.mobileMenuOpen) {
+      this.mobileMenuOpen = false;
+      document.body.classList.remove('menu-open');
+      document.body.style.overflow = '';
+    }
+  }
+  
+  // Close mobile menu when clicking outside
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    // Check if click is outside of mobile menu and menu button
+    if (this.mobileMenuOpen) {
+      const mobileMenuElement = document.querySelector('.mobile-nav');
+      const menuButtonElement = document.querySelector('.mobile-menu-button');
+      
+      if (mobileMenuElement && menuButtonElement) {
+        const isClickInside = mobileMenuElement.contains(event.target as Node) || 
+                              menuButtonElement.contains(event.target as Node);
+        
+        if (!isClickInside) {
+          this.closeMobileMenu();
+        }
+      }
+    }
+  }
+  
+  // Close mobile menu on resize if screen becomes large enough
+  @HostListener('window:resize')
+  onResize(): void {
+    if (window.innerWidth > 600 && this.mobileMenuOpen) {
+      this.closeMobileMenu();
+    }
   }
   
   // Image error handlers

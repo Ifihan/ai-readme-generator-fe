@@ -15,7 +15,7 @@
         </a>
       </div>
       
-      <!-- Navigation centered -->
+      <!-- Desktop Navigation -->
       <nav class="nav-menu">
         <ul class="nav-list">
           <li class="nav-item"><a href="#features" class="nav-link">Features</a></li>
@@ -23,7 +23,16 @@
         </ul>
       </nav>
       
-      <!-- GitHub stats and contribute button on the right -->
+      <!-- Mobile Menu Button -->
+      <button class="mobile-menu-button" (click)="toggleMobileMenu()" aria-label="Toggle menu">
+        <div class="mobile-menu-icon" [class.open]="mobileMenuOpen">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
+      
+      <!-- GitHub Stats in Header -->
       <div class="github-stats-header">
         <a href="https://github.com/username/readmeai" class="stat-link" title="Star on GitHub">
           <i class="star-icon"></i>
@@ -42,7 +51,18 @@
   </div>
 </header>
 
-<!-- Rest of the page content remains the same, just fixing the sparkles icon -->
+<!-- Mobile Navigation Menu -->
+<nav class="mobile-nav" [class.open]="mobileMenuOpen">
+  <ul class="mobile-nav-list">
+    <li class="mobile-nav-item">
+      <a href="#features" class="mobile-nav-link" (click)="closeMobileMenu()">Features</a>
+    </li>
+    <li class="mobile-nav-item">
+      <a href="#how-it-works" class="mobile-nav-link" (click)="closeMobileMenu()">How it works</a>
+    </li>
+  </ul>
+</nav>
+
 <main class="container">
   <!-- Hero Section -->
   <section class="hero">
@@ -52,7 +72,7 @@
         Connect your GitHub repositories and create professional READMEs in seconds with our AI-powered generator.
       </p>
       <div class="cta-button animate-slide-up-delayed">
-        <a href="#" class="btn btn-primary animate-pulse">
+        <a href="#" class="btn btn-primary animate-pulse" (click)="signInWithGitHub()">
           <i class="github-icon"></i> Sign in with GitHub
         </a>
       </div>
@@ -83,8 +103,7 @@
         @for (feature of features; track feature.title; let i = $index) {
           <li class="feature-item animate-slide-in" [style.animation-delay]="(i * 0.2) + 's'">
             <div class="feature-icon">
-              <!-- Replace sparkles icon with lightbulb for AI-Powered Generation -->
-              <i [class]="feature.title === 'AI-Powered Generation' ? 'lightbulb-icon' : feature.icon + '-icon'"></i>
+              <i [class]="feature.icon + '-icon'"></i>
             </div>
             <div class="feature-content">
               <h3 class="feature-title">{{ feature.title }}</h3>
@@ -103,8 +122,7 @@
       @for (step of steps; track step.number; let i = $index) {
         <div class="step-card animate-fade-in-scale" [style.animation-delay]="(i * 0.2) + 's'">
           <div class="step-icon">
-            <!-- Replace sparkles icon with lightbulb for AI-related steps -->
-            <i [class]="step.icon === 'sparkles' ? 'lightbulb-icon' : step.icon + '-icon'"></i>
+            <i [class]="step.icon + '-icon'"></i>
           </div>
           <h3 class="step-title">{{ step.title }}</h3>
           <p class="step-description">{{ step.description }}</p>
@@ -114,7 +132,7 @@
   </section>
 </main>
 
-<!-- Theme Toggle and Footer remain unchanged -->
+<!-- Theme Toggle -->
 @if (isBrowser) {
   <div class="theme-toggle animate-fade-in">
     <button 
@@ -165,18 +183,16 @@
         <div class="footer-links-column">
           <h3 class="footer-heading">Resources</h3>
           <ul class="footer-list">
-            <li><a href="#docs">Documentation</a></li>
             <li><a href="#api">API</a></li>
             <li><a href="#blog">Blog</a></li>
           </ul>
         </div>
         
         <div class="footer-links-column">
-          <h3 class="footer-heading">Company</h3>
+          <h3 class="footer-heading">About</h3>
           <ul class="footer-list">
-            <li><a href="#about">About us</a></li>
+            <li><a href="#about">About me</a></li>
             <li><a href="#contact">Contact</a></li>
-            <li><a href="#privacy">Privacy Policy</a></li>
           </ul>
         </div>
       </div>
