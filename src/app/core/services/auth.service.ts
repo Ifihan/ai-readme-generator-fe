@@ -1,95 +1,57 @@
-import { Injectable, isDevMode } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
-
-export interface User {
-  id: number;
-  login: string;
-  name: string;
-  avatarUrl: string;
-  email: string;
-}
-
-@Injectable({
-  providedIn: 'root'
-})
+import { Router } from '@angular/router';
+import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
+import { catchError, map, tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
+@Injectable({ providedIn: 'root' })
 export class AuthService {
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  private http = inject(HttpClient);
+  private router = inject(Router);
   private tokenSubject = new BehaviorSubject<string | null>(null);
+  
+  private readonly GITHUB_CLIENT_ID = environment.githubClientId;
+  private readonly API_URL = environment.apiUrl;
 
-  constructor(private http: HttpClient) {
-    if (typeof localStorage !== 'undefined') {
-      // Check local storage for existing tokens on initialization
-      const token = localStorage.getItem('github_token');
-      const user = localStorage.getItem('user');
-
-      if (token) {
-        this.tokenSubject.next(token);
-      }
-
-      if (user) {
-        try {
-          this.currentUserSubject.next(JSON.parse(user));
-        } catch (e) {
-          localStorage.removeItem('user');
-        }
-      }
-    } else {
-      if (isDevMode()) {
-        console.warn('localStorage is not available');
-      }
-    }
-  }
-
-  // GitHub OAuth login
   loginWithGitHub(): void {
-    // In production, this will redirect to the GitHub authorization URL
-    window.location.href = 'https://github.com/login/oauth/authorize?client_id=YOUR_CLIENT_ID&scope=repo';
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=${this.GITHUB_CLIENT_ID}&redirect_uri=${window.location.origin}/api/v1/auth/callback`;
   }
 
-  // Handle OAuth callback - this will be called by the server after GitHub redirects back
-  handleCallback(code: string): Observable<User> {
-    // Exchange code for token using backend
-    return this.http.post<{token: string, user: User}>('/api/auth/github', { code }).pipe(
-      tap(response => {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('github_token', response.token);
-          localStorage.setItem('user', JSON.stringify(response.user));
-        }
-
-        this.tokenSubject.next(response.token);
-        this.currentUserSubject.next(response.user);
+  handleCallback(code: string): Observable<any> {
+    return this.http.post(`${this.API_URL}/auth/login`, { code }).pipe(
+      tap((response: any) => {
+        this.tokenSubject.next(response.access_token);
+        localStorage.setItem('access_token', response.access_token);
       }),
       catchError(error => {
-        console.error('GitHub auth error:', error);
-        return of(null as any);
+        this.clearAuth();
+        return throwError(() => error);
       })
     );
   }
 
-  logout(): void {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem('github_token');
-      localStorage.removeItem('user');
-    }
-
-    this.tokenSubject.next(null);
-    this.currentUserSubject.next(null);
-  }
-
-  // Check if the user is currently authenticated
-  isAuthenticated(): Observable<boolean> {
-    return of(this.tokenSubject.value !== null);
-  }
-
-  // Get the current user
-  getCurrentUser(): Observable<User | null> {
-    return this.currentUserSubject.asObservable();
-  }
-
-  // Get the access token
   getToken(): Observable<string | null> {
     return this.tokenSubject.asObservable();
+  }
+
+  isAuthenticated(): Observable<boolean> {
+    return this.tokenSubject.pipe(
+      map((token: any) => !!token)
+    );
+  }
+
+  private clearAuth(): void {
+    this.tokenSubject.next(null);
+    localStorage.removeItem('access_token');
+  }
+
+  logout(): void {
+    this.http.post(`${this.API_URL}/auth/logout`, {}).subscribe({
+      next: () => {
+        this.clearAuth();
+        this.router.navigate(['/']);
+      },
+      error: () => this.clearAuth()
+    });
   }
 }

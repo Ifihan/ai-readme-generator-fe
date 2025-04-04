@@ -42,7 +42,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
     {
       title: 'Markdown Export',
       description: 'Download or push directly to your repository',
-      icon: 'download'
+      icon: 'branch'
     }
   ];
 
@@ -69,7 +69,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
       number: 4,
       title: 'Download or Push',
       description: 'Save the README locally or push directly to your repository',
-      icon: 'download'
+      icon: 'branch'
     }
   ];
 
@@ -84,7 +84,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
   isBrowser: boolean;
 
   constructor(
-    private githubService: GithubService,
+    // private githubService: GithubService,
     private authService: AuthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
@@ -210,6 +210,16 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
   signInWithGitHub(): void {
     this.authService.loginWithGitHub();
+  }
+
+  handleGitHubLogin(): void {
+    console.log('Login button clicked');
+    if (this.isBrowser) {
+      // Only attempt to redirect if in a browser environment
+      this.authService.loginWithGitHub();
+    } else {
+      console.warn('Cannot navigate: not in browser environment');
+    }
   }
   
   // Mobile menu methods
