@@ -7,7 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:ai-readme-generator-fe": "node dist/ai-readme-generator-fe/server/server.mjs"
+    "serve:ssr:ai-readme-generator-fe": "node dist/ai-readme-generator-fe/server/server.mjs",
+    "serve:ssr:second_app": "node dist/second_app/server/server.mjs"
   },
   "private": true,
   "dependencies": {
