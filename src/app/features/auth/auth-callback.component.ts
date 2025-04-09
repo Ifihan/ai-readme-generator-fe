@@ -1,33 +1,46 @@
-// src/app/features/auth/auth-callback.component.ts
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-auth-callback',
+  standalone: true,
+  imports: [CommonModule],
   template: `
-    <div class="callback-container">
-      <div class="loading-spinner"></div>
-      <p>Completing authentication, please wait...</p>
+    <div class="auth-callback-container">
+      <div class="auth-callback-card">
+        <h2>Completing Authentication</h2>
+        <p>Please wait while we complete the GitHub authentication process...</p>
+        <div class="loading-spinner"></div>
+      </div>
     </div>
   `,
   styles: [`
-    .callback-container {
+    .auth-callback-container {
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       height: 100vh;
+      background-color: var(--bg-primary);
+    }
+    .auth-callback-card {
+      padding: 30px;
+      border-radius: 8px;
+      background-color: var(--bg-card);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       text-align: center;
+      max-width: 500px;
     }
     .loading-spinner {
-      width: 50px;
-      height: 50px;
-      border: 5px solid rgba(138, 43, 226, 0.2);
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      margin: 20px auto 0;
+      border: 4px solid rgba(0, 0, 0, 0.1);
       border-radius: 50%;
-      border-top-color: #8a2be2;
-      animation: spin 1s ease-in-out infinite;
-      margin-bottom: 20px;
+      border-top-color: var(--primary);
+      animation: spin 1s linear infinite;
     }
     @keyframes spin {
       to { transform: rotate(360deg); }
@@ -42,22 +55,26 @@ export class AuthCallbackComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Get the code from the URL querystring
+    console.log('Auth callback component initialized');
+    
     this.route.queryParams.subscribe(params => {
       const code = params['code'];
       
       if (code) {
-        // Process the authentication callback
+        console.log('GitHub auth code received, processing...');
+        
         this.authService.handleCallback(code).subscribe({
           next: () => {
-
+            console.log('Successfully authenticated, redirecting to dashboard');
             this.router.navigate(['/dashboard']);
           },
-          error: () => {
+          error: (error) => {
+            console.error('Error during auth callback:', error);
             this.router.navigate(['/']);
           }
         });
       } else {
+        console.warn('No code found in callback, redirecting to landing page');
         this.router.navigate(['/']);
       }
     });

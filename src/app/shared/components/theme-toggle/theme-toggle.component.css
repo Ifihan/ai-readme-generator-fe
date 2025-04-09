@@ -1,0 +1,84 @@
+.theme-toggle {
+  display: flex;
+  background-color: var(--bg-secondary);
+  border-radius: 100px;
+  padding: 3px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: fit-content;
+  position: absolute;
+  z-index: 10000;
+}
+
+.toggle-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.toggle-btn.active {
+  background-color: #8a2be2;
+  color: white;
+}
+
+.toggle-btn.active svg {
+  color: white;
+  stroke: black;
+}
+
+.toggle-btn:hover:not(.active) {
+  background-color: var(--bg-hover);
+}
+
+.toggle-btn svg {
+  stroke-width: 2.5;
+}
+
+:host {
+  display: block;
+}
+
+:host.fixed .theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10000;
+}
+
+@media (max-width: 768px) {
+  :host.fixed .theme-toggle {
+    bottom: 20px;
+    right: 20px;
+    z-index: 10000;
+  }
+
+  .toggle-btn {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  :host.fixed .theme-toggle {
+    bottom: 20px;
+    right: 20px;
+    z-index: 10000;
+  }
+
+  .toggle-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .theme-toggle {
+    padding: 2px;
+  }
+}

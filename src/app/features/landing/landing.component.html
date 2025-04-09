@@ -132,28 +132,9 @@
   </section>
 </main>
 
-<!-- Theme Toggle -->
+<!-- Theme Toggle - using the shared component -->
 @if (isBrowser) {
-  <div class="theme-toggle animate-fade-in">
-    <button 
-      [class.active]="currentTheme === 'light'"
-      (click)="setTheme('light')" 
-      aria-label="Light theme">
-      <i class="sun-icon"></i>
-    </button>
-    <button 
-      [class.active]="currentTheme === 'dark'"
-      (click)="setTheme('dark')" 
-      aria-label="Dark theme">
-      <i class="moon-icon"></i>
-    </button>
-    <button 
-      [class.active]="currentTheme === 'system'"
-      (click)="setTheme('system')" 
-      aria-label="System theme">
-      <i class="computer-icon"></i>
-    </button>
-  </div>
+  <app-theme-toggle class="fixed animate-fade-in"></app-theme-toggle>
 }
 
 <footer class="footer animate-slide-up">

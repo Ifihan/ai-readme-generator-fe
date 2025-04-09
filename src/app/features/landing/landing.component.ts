@@ -4,13 +4,14 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { GithubService } from '../../core/services/github.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component'; // Import the shared component
 
 @Component({
   selector: 'app-landing',
   templateUrl: './landing.component.html',
   styleUrls: ['./landing.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule]
+  imports: [CommonModule, RouterModule, ThemeToggleComponent] // Add ThemeToggleComponent to imports
 })
 export class LandingComponent implements OnInit, AfterViewInit {
   @ViewChild('logoImg') logoImg!: ElementRef;
@@ -80,7 +81,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
     contributors: 12
   };
   
-  currentTheme: 'light' | 'dark' | 'system' = 'system';
+  // Just keep isBrowser for conditional rendering
   isBrowser: boolean;
 
   constructor(
@@ -92,8 +93,9 @@ export class LandingComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
+    // Theme initialization is now handled by ThemeToggleComponent
     if (this.isBrowser) {
-      this.initTheme();
+      // Setup scroll-related functionality
     }
   }
   
@@ -106,41 +108,6 @@ export class LandingComponent implements OnInit, AfterViewInit {
     }
   }
   
-  initTheme(): void {
-    // Only run in browser environment
-    if (!this.isBrowser) return;
-    
-    // Check for saved theme preference, default to system if not found
-    try {
-      const savedTheme = localStorage.getItem('theme') || 'system';
-      this.setTheme(savedTheme as 'light' | 'dark' | 'system');
-    } catch (error) {
-      console.warn('Could not access localStorage:', error);
-      this.setTheme('system');
-    }
-  }
-
-  setTheme(theme: 'light' | 'dark' | 'system'): void {
-    if (!this.isBrowser) return;
-    
-    this.currentTheme = theme;
-    
-    try {
-      localStorage.setItem('theme', theme);
-    } catch (error) {
-      console.warn('Could not write to localStorage:', error);
-    }
-    
-    document.documentElement.setAttribute('data-theme', theme);
-    
-    if (theme === 'system') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.toggle('dark', prefersDark);
-    } else {
-      document.documentElement.classList.toggle('dark', theme === 'dark');
-    }
-  }
-
   setupSmoothScrolling(): void {
     // Add advanced smooth scrolling for all anchor links
     const navLinks = document.querySelectorAll('a[href^="#"]');

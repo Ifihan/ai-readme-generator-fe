@@ -615,7 +615,7 @@ h1 {
   padding: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
-  z-index: 100;
+  z-index: 10000 !important;
 }
 
 .theme-toggle button {
