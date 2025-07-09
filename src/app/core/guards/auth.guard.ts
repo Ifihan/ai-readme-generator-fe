@@ -18,7 +18,7 @@
 //   }
 
 //   // canActivate(
-//   //   route: ActivatedRouteSnapshot, 
+//   //   route: ActivatedRouteSnapshot,
 //   //   state: RouterStateSnapshot
 //   // ): boolean {
 //   //   // Temporarily bypass authentication check
@@ -30,7 +30,7 @@
 //   canActivate(
 //     route: ActivatedRouteSnapshot,
 //     state: RouterStateSnapshot,
-    
+
 //   ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
 //     // For server-side rendering, always allow navigation
 //     // The actual auth check will happen on the client side
@@ -43,7 +43,7 @@
 //         if (isAuthenticated) {
 //           return true;
 //         }
-        
+
 //         // Redirect to the landing page if not authenticated
 //         return this.router.createUrlTree(['']);
 //       }),
@@ -81,9 +81,14 @@ export class AuthGuard {
     state: RouterStateSnapshot,
   ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     console.log('AuthGuard.canActivate called for route:', state.url);
-    
+
+    // If a token query parameter is present, bypass auth check to allow redirection in Dashboard
+    if (route.queryParamMap.has('token')) {
+      console.log('Token query parameter found, bypassing auth check');
+      return true;
+    }
+
     // For server-side rendering, always allow navigation
-    // The actual auth check will happen on the client side
     if (!this.isBrowser) {
       console.log('Server-side rendering, allowing navigation');
       return true;
@@ -96,7 +101,7 @@ export class AuthGuard {
           console.log('User authenticated, allowing navigation');
           return true;
         }
-        
+
         console.log('User not authenticated, redirecting to landing page');
         // Redirect to the landing page if not authenticated
         return this.router.createUrlTree(['']);

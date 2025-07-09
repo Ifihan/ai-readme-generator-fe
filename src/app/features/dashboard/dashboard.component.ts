@@ -106,9 +106,9 @@
 //       this.isLoading = false;
 //       return;
 //     }
-  
+
 //     this.isLoading = true;
-    
+
 //     const authSub = this.authService.isAuthenticated().subscribe({
 //       next: (isAuthenticated) => {
 //         if (isAuthenticated) {
@@ -125,7 +125,7 @@
 //         this.hasError = true;
 //       }
 //     });
-  
+
 //     this.subscriptions.add(authSub);
 //   }
 
@@ -134,16 +134,16 @@
 //    */
 //   loadInstallationsAndRepositories(): void {
 //     this.isLoading = true;
-    
+
 //     try {
 //       // Add this log to check if we're getting installations
 //       console.log('Fetching GitHub app installations...');
-      
+
 //       const installationsSub = this.githubService.getInstallations().subscribe({
 //         next: (installations) => {
 //           console.log('Installations received:', installations);
 //           this.installations = installations;
-          
+
 //           if (installations && installations.length > 0) {
 //             // Load repositories for the first installation
 //             console.log(`Loading repositories for installation ${installations[0].id}...`);
@@ -173,12 +173,12 @@
 //    */
 //   loadRepositories(installationId: string): void {
 //     console.log(`Fetching repositories for installation ${installationId}...`);
-    
+
 //     try {
 //       const reposSub = this.githubService.getInstallationRepositories(installationId).subscribe({
 //         next: (repos) => {
 //           console.log('Repositories received:', repos);
-          
+
 //           // Map the repositories to the display format
 //           this.repositories = repos.map(repo => ({
 //             id: repo.id,
@@ -188,9 +188,9 @@
 //             initialLetter: repo.name.charAt(0).toUpperCase(),
 //             color: this.getColorForLanguage(repo.language)
 //           }));
-          
+
 //           console.log('Processed repositories:', this.repositories);
-          
+
 //           // Initialize filtered repositories
 //           this.filterRepositories();
 //           this.isLoading = false;
@@ -218,18 +218,18 @@
 //       this.filteredRepositories = [...this.repositories];
 //     } else {
 //       const query = this.searchQuery.toLowerCase();
-//       this.filteredRepositories = this.repositories.filter(repo => 
-//         repo.name.toLowerCase().includes(query) || 
+//       this.filteredRepositories = this.repositories.filter(repo =>
+//         repo.name.toLowerCase().includes(query) ||
 //         repo.language.toLowerCase().includes(query)
 //       );
 //     }
-    
+
 //     // Update pagination
 //     this.totalPages = Math.ceil(this.filteredRepositories.length / this.itemsPerPage) || 1;
 //     this.currentPage = Math.min(this.currentPage, this.totalPages);
 //     this.updateDisplayedRepositories();
 //     this.generatePageNumbers();
-    
+
 //     console.log(`Filtered repositories: ${this.filteredRepositories.length}, total pages: ${this.totalPages}`);
 //   }
 
@@ -247,10 +247,10 @@
 //   updateDisplayedRepositories(): void {
 //     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
 //     this.displayedRepositories = this.filteredRepositories.slice(
-//       startIndex, 
+//       startIndex,
 //       startIndex + this.itemsPerPage
 //     );
-    
+
 //     console.log(`Displaying repositories ${startIndex+1} to ${startIndex+this.displayedRepositories.length}`);
 //   }
 
@@ -259,7 +259,7 @@
 //    */
 //   generatePageNumbers(): void {
 //     this.pageNumbers = [];
-    
+
 //     if (this.totalPages <= 7) {
 //       // If we have 7 or fewer pages, show all page numbers
 //       for (let i = 1; i <= this.totalPages; i++) {
@@ -268,25 +268,25 @@
 //     } else {
 //       // Always include first page
 //       this.pageNumbers.push(1);
-      
+
 //       if (this.currentPage > 3) {
 //         // Add ellipsis if current page is far from start
 //         this.pageNumbers.push(-1); // -1 represents ellipsis
 //       }
-      
+
 //       // Add pages around current page
 //       const start = Math.max(2, this.currentPage - 1);
 //       const end = Math.min(this.totalPages - 1, this.currentPage + 1);
-      
+
 //       for (let i = start; i <= end; i++) {
 //         this.pageNumbers.push(i);
 //       }
-      
+
 //       if (this.currentPage < this.totalPages - 2) {
 //         // Add ellipsis if current page is far from end
 //         this.pageNumbers.push(-2); // -2 represents ellipsis (to differentiate from first ellipsis)
 //       }
-      
+
 //       // Always include last page
 //       this.pageNumbers.push(this.totalPages);
 //     }
@@ -299,7 +299,7 @@
 //     if (page < 1 || page > this.totalPages) {
 //       return;
 //     }
-    
+
 //     this.currentPage = page;
 //     this.updateDisplayedRepositories();
 //     this.generatePageNumbers();
@@ -310,12 +310,12 @@
 //    */
 //   formatDate(dateString: string): string {
 //     if (!dateString) return 'Unknown';
-    
+
 //     const date = new Date(dateString);
 //     const now = new Date();
 //     const diffTime = Math.abs(now.getTime() - date.getTime());
 //     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
 //     if (diffDays === 0) {
 //       return 'today';
 //     } else if (diffDays === 1) {
@@ -339,7 +339,7 @@
 //    */
 //   getColorForLanguage(language: string): string {
 //     if (!language) return '#CCCCCC';
-    
+
 //     // Common language colors (similar to GitHub's language colors)
 //     const languageColors: { [key: string]: string } = {
 //       JavaScript: '#f1e05a',
@@ -358,7 +358,7 @@
 //       CSS: '#563d7c',
 //       Shell: '#89e051'
 //     };
-    
+
 //     // Return known language color or generate one from the name
 //     if (languageColors[language]) {
 //       return languageColors[language];
@@ -368,13 +368,13 @@
 //       for (let i = 0; i < language.length; i++) {
 //         hash = language.charCodeAt(i) + ((hash << 5) - hash);
 //       }
-      
+
 //       let color = '#';
 //       for (let i = 0; i < 3; i++) {
 //         const value = (hash >> (i * 8)) & 0xFF;
 //         color += ('00' + value.toString(16)).substr(-2);
 //       }
-      
+
 //       return color;
 //     }
 //   }
@@ -408,12 +408,12 @@
 //   generateReadme(repositoryId: number): void {
 //     console.log(`Generating README for repository ID ${repositoryId}...`);
 //     this.generatingReadmes[repositoryId] = true;
-    
+
 //     const generateSub = this.githubService.generateReadme(repositoryId).subscribe({
 //       next: (response) => {
 //         console.log('README generated successfully:', response);
 //         this.generatingReadmes[repositoryId] = false;
-        
+
 //         // Navigate to the new README
 //         if (response && response.id) {
 //           this.router.navigate(['/readmes', response.id]);
@@ -424,7 +424,7 @@
 //         this.generatingReadmes[repositoryId] = false;
 //       }
 //     });
-    
+
 //     this.subscriptions.add(generateSub);
 //   }
 
@@ -449,7 +449,7 @@
 
 import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
@@ -470,8 +470,10 @@ interface NavItem {
 interface RepositoryDisplay {
   id: number;
   name: string;
-  lastUpdated: string;
-  language: string;
+  full_name: string;
+  description: string;
+  private: boolean;
+  html_url: string;
   initialLetter: string;
   color: string;
 }
@@ -502,9 +504,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   // Navigation items for the sidebar
   navItems: NavItem[] = [
-    { label: 'Dashboard', icon: 'home', route: ['/dashboard'], active: true },
-    { label: 'My READMEs', icon: 'file-text', route: ['/readmes'] },
-    { label: 'Settings', icon: 'settings', route: ['/settings'] }
+    {
+      label: 'Dashboard',
+      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 22V12H15V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      route: ['/dashboard']
+    },
+    // {
+    //   label: 'My READMEs',
+    //   icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 13H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 9H9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    //   route: ['/readmes']
+    // },
+    // {
+    //   label: 'Settings',
+    //   icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M19.4 15C19.2669 15.3016 19.2272 15.6362 19.286 15.9606C19.3448 16.285 19.4995 16.5843 19.73 16.82L19.79 16.88C19.976 17.0657 20.1235 17.2863 20.2241 17.5291C20.3248 17.7719 20.3766 18.0322 20.3766 18.295C20.3766 18.5578 20.3248 18.8181 20.2241 19.0609C20.1235 19.3037 19.976 19.5243 19.79 19.71C19.6043 19.896 19.3837 20.0435 19.1409 20.1441C18.8981 20.2448 18.6378 20.2966 18.375 20.2966C18.1122 20.2966 17.8519 20.2448 17.6091 20.1441C17.3663 20.0435 17.1457 19.896 16.96 19.71L16.9 19.65C16.6643 19.4195 16.365 19.2648 16.0406 19.206C15.7162 19.1472 15.3816 19.1869 15.08 19.32C14.7842 19.4468 14.532 19.6572 14.3543 19.9255C14.1766 20.1938 14.0813 20.5082 14.08 20.83V21C14.08 21.5304 13.8693 22.0391 13.4942 22.4142C13.1191 22.7893 12.6104 23 12.08 23C11.5496 23 11.0409 22.7893 10.6658 22.4142C10.2907 22.0391 10.08 21.5304 10.08 21V20.91C10.0723 20.579 9.96512 20.2579 9.77251 19.9887C9.5799 19.7194 9.31074 19.5143 9 19.4C8.69838 19.2669 8.36381 19.2272 8.03941 19.286C7.71502 19.3448 7.41568 19.4995 7.18 19.73L7.12 19.79C6.93425 19.976 6.71368 20.1235 6.47088 20.2241C6.22808 20.3248 5.96783 20.3766 5.705 20.3766C5.44217 20.3766 5.18192 20.3248 4.93912 20.2241C4.69632 20.1235 4.47575 19.976 4.29 19.79C4.10405 19.6043 3.95653 19.3837 3.85588 19.1409C3.75523 18.8981 3.70343 18.6378 3.70343 18.375C3.70343 18.1122 3.75523 17.8519 3.85588 17.6091C3.95653 17.3663 4.10405 17.1457 4.29 16.96L4.35 16.9C4.58054 16.6643 4.73519 16.365 4.794 16.0406C4.85282 15.7162 4.81312 15.3816 4.68 15.08C4.55324 14.7842 4.34276 14.532 4.07447 14.3543C3.80618 14.1766 3.49179 14.0813 3.17 14.08H3C2.46957 14.08 1.96086 13.8693 1.58579 13.4942C1.21071 13.1191 1 12.6104 1 12.08C1 11.5496 1.21071 11.0409 1.58579 10.6658C1.96086 10.2907 2.46957 10.08 3 10.08H3.09C3.42099 10.0723 3.742 9.96512 4.01127 9.77251C4.28054 9.5799 4.48571 9.31074 4.6 9C4.73312 8.69838 4.77282 8.36381 4.714 8.03941C4.65519 7.71502 4.50054 7.41568 4.27 7.18L4.21 7.12C4.02405 6.93425 3.87653 6.71368 3.77588 6.47088C3.67523 6.22808 3.62343 5.96783 3.62343 5.705C3.62343 5.44217 3.67523 5.18192 3.77588 4.93912C3.87653 4.69632 4.02405 4.47575 4.21 4.29C4.39575 4.10405 4.61632 3.95653 4.85912 3.85588C5.10192 3.75523 5.36217 3.70343 5.625 3.70343C5.88783 3.70343 6.14808 3.75523 6.39088 3.85588C6.63368 3.95653 6.85425 4.10405 7.04 4.29L7.1 4.35C7.335
+    //   route: ['/settings']
+    // }
   ];
 
   private subscriptions: Subscription = new Subscription();
@@ -513,6 +527,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private githubService: GithubService,
     private router: Router,
+    private route: ActivatedRoute, // <-- inject ActivatedRoute here
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     // Make absolutely sure this variable is set correctly
@@ -522,19 +537,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    console.log('Dashboard ngOnInit - isBrowser:', this.isBrowser);
-    this.loadUserInfo();
-    
-    // Add a small delay to let the browser initialize fully
-    if (typeof window !== 'undefined') {
-      console.log('Window is defined, scheduling auth check with delay');
-      setTimeout(() => {
-        console.log('Running auth check after delay');
-        this.checkAuthAndLoadRepositories();
-      }, 100);
-    } else {
-      console.log('Window not defined in ngOnInit, skipping auth check');
-    }
+    // Check if a token exists in the query parameters
+    this.route.queryParams.subscribe(params => {
+      const token = params['token'];
+      if (token) {
+        // Immediately redirect to auth/callback with the token query parameter
+        this.router.navigate(['/auth/callback'], { queryParams: { token } });
+        return;
+      }
+
+      // Continue with the original Dashboard initialization if no token is present
+      console.log('Dashboard ngOnInit - isBrowser:', this.isBrowser);
+      this.loadUserInfo();
+
+      // Add a small delay to let the browser initialize fully
+      if (typeof window !== 'undefined') {
+        console.log('Window is defined, scheduling auth check with delay');
+        setTimeout(() => {
+          console.log('Running auth check after delay');
+          this.checkAuthAndLoadRepositories();
+        }, 100);
+      } else {
+        console.log('Window not defined in ngOnInit, skipping auth check');
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -545,18 +571,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Load the authenticated user's info
    */
   loadUserInfo(): void {
-    console.log('Loading user info');
-    const userSub = this.authService.getUser().subscribe({
-      next: (user) => {
-        console.log('User info loaded:', user);
-        this.userName = user?.username || 'Guest';
-      },
-      error: (error) => {
-        console.error('Error loading user info:', error);
-        this.userName = 'Guest';
+    if (this.isBrowser) {
+      const user = localStorage.getItem('current_session');
+      if (user) {
+        try {
+          const parsedUser = JSON.parse(user);
+          this.userName = parsedUser?.username || 'Guest';
+          console.log('Loaded user info:', this.userName);
+        } catch (error) {
+          console.error('Error parsing user info from localStorage:', error);
+          this.userName = 'Guest';
+        }
       }
-    });
-    this.subscriptions.add(userSub);
+    }
   }
 
   /**
@@ -565,25 +592,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
   checkAuthAndLoadRepositories(): void {
     // Check if window object exists (most reliable way to check for browser environment)
     const isWindowDefined = typeof window !== 'undefined';
-    
+
     console.log('checkAuthAndLoadRepositories - Window defined check:', isWindowDefined);
     console.log('checkAuthAndLoadRepositories - isBrowser property:', this.isBrowser);
-    
+
     if (!isWindowDefined) {
       console.log('Not in browser environment, skipping auth check');
       this.isLoading = false;
       return;
     }
-  
+
     this.isLoading = true;
-    
+
     const authSub = this.authService.isAuthenticated().subscribe({
       next: (isAuthenticated) => {
         console.log('Authentication check result:', isAuthenticated);
-        
+
         if (isAuthenticated) {
           console.log('User is authenticated, getting installations...');
-          this.loadInstallationsAndRepositories();
+          this.loadRepositories();
         } else {
           console.log('User not authenticated, showing empty state');
           this.isLoading = false;
@@ -595,74 +622,56 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.hasError = true;
       }
     });
-  
+
     this.subscriptions.add(authSub);
   }
 
   /**
    * Load installations and then repositories for the first installation
    */
-  loadInstallationsAndRepositories(): void {
+  loadRepositories(): void {
     this.isLoading = true;
-    
     try {
-      console.log('Fetching GitHub app installations...');
-      
-      const installationsSub = this.githubService.getInstallations().subscribe({
-        next: (installations) => {
-          console.log('Installations received:', installations);
-          this.installations = installations;
-          
-          if (installations && installations.length > 0) {
-            // Load repositories for the first installation
-            console.log(`Loading repositories for installation ${installations[0].id}...`);
-            this.loadRepositories(installations[0].id);
+      console.log('Fetching repositories...');
+      const reposSub = this.githubService.getRepositories().subscribe({
+        next: (repositoriesResponse) => {
+          console.log('Repositories response received:', repositoriesResponse);
+          this.installations = repositoriesResponse.repositories;
+          if (repositoriesResponse.repositories && repositoriesResponse.repositories.length > 0) {
+            // Map the repositories to the display format
+            this.repositories = repositoriesResponse.repositories.map(repo => {
+              const id: number = typeof repo.id === 'number' ? repo.id : parseInt(repo.id, 10);
+              const name: string = repo.name || '';
+              const full_name: string = repo.full_name || '';
+              const description: string = repo.description || 'No description available';
+              const private_repo: boolean = repo.private || false;
+              const html_url: string = repo.html_url || '';
+              const updatedAt: string = repo.updated_at || '';
+              const language: string = repo.language || 'Unknown';
+              return {
+                id,
+                name,
+                full_name,
+                description,
+                private: private_repo,
+                html_url,
+                language,
+                lastUpdated: this.formatDate(updatedAt),
+                initialLetter: name.charAt(0).toUpperCase(),
+                color: this.getColorForLanguage(language)
+              };
+            });
+            this.filterRepositories();
+            this.isLoading = false;
           } else {
-            console.log('No installations found, showing empty state');
+            this.repositories = [];
+            this.filteredRepositories = [];
+            this.displayedRepositories = [];
+            this.totalPages = 1;
+            this.pageNumbers = [1];
+            console.log('No repositories found, showing empty state');
             this.isLoading = false;
           }
-        },
-        error: (error) => {
-          console.error('Failed to load installations:', error);
-          this.isLoading = false;
-          this.hasError = true;
-        }
-      });
-
-      this.subscriptions.add(installationsSub);
-    } catch (error) {
-      console.error('Error in loadInstallationsAndRepositories:', error);
-      this.isLoading = false;
-      this.hasError = true;
-    }
-  }
-
-  /**
-   * Load repositories for a specific installation
-   */
-  loadRepositories(installationId: string): void {
-    console.log(`Fetching repositories for installation ${installationId}...`);
-    
-    try {
-      const reposSub = this.githubService.getInstallationRepositories(installationId).subscribe({
-        next: (repos) => {
-          console.log('Repositories received:', repos);
-          
-          // Map the repositories to the display format
-          this.repositories = repos.map(repo => ({
-            id: repo.id,
-            name: repo.name,
-            lastUpdated: this.formatDate(repo.updated_at),
-            language: repo.language || 'Unknown',
-            initialLetter: repo.name.charAt(0).toUpperCase(),
-            color: this.getColorForLanguage(repo.language)
-          }));
-          
-          console.log('Processed repositories:', this.repositories);
-          
-          // Initialize filtered repositories
-          this.filterRepositories();
-          this.isLoading = false;
         },
         error: (error) => {
           console.error('Failed to load repositories:', error);
@@ -670,7 +679,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           this.hasError = true;
         }
       });
-
       this.subscriptions.add(reposSub);
     } catch (error) {
       console.error('Error in loadRepositories:', error);
@@ -687,18 +695,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.filteredRepositories = [...this.repositories];
     } else {
       const query = this.searchQuery.toLowerCase();
-      this.filteredRepositories = this.repositories.filter(repo => 
-        repo.name.toLowerCase().includes(query) || 
-        repo.language.toLowerCase().includes(query)
+      this.filteredRepositories = this.repositories.filter(repo =>
+        repo.name.toLowerCase().includes(query) ||
+        repo.full_name.toLowerCase().includes(query) ||
+        repo.description.toLowerCase().includes(query)
       );
     }
-    
+
     // Update pagination
     this.totalPages = Math.ceil(this.filteredRepositories.length / this.itemsPerPage) || 1;
     this.currentPage = Math.min(this.currentPage, this.totalPages);
     this.updateDisplayedRepositories();
     this.generatePageNumbers();
-    
+
     console.log(`Filtered repositories: ${this.filteredRepositories.length}, total pages: ${this.totalPages}`);
   }
 
@@ -716,11 +725,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   updateDisplayedRepositories(): void {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     this.displayedRepositories = this.filteredRepositories.slice(
-      startIndex, 
+      startIndex,
       startIndex + this.itemsPerPage
     );
-    
-    console.log(`Displaying repositories ${startIndex+1} to ${startIndex+this.displayedRepositories.length}`);
+
+    console.log(`Displaying repositories ${startIndex + 1} to ${startIndex + this.displayedRepositories.length}`);
   }
 
   /**
@@ -728,7 +737,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   generatePageNumbers(): void {
     this.pageNumbers = [];
-    
+
     if (this.totalPages <= 7) {
       // If we have 7 or fewer pages, show all page numbers
       for (let i = 1; i <= this.totalPages; i++) {
@@ -737,25 +746,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
     } else {
       // Always include first page
       this.pageNumbers.push(1);
-      
+
       if (this.currentPage > 3) {
         // Add ellipsis if current page is far from start
         this.pageNumbers.push(-1); // -1 represents ellipsis
       }
-      
+
       // Add pages around current page
       const start = Math.max(2, this.currentPage - 1);
       const end = Math.min(this.totalPages - 1, this.currentPage + 1);
-      
+
       for (let i = start; i <= end; i++) {
         this.pageNumbers.push(i);
       }
-      
+
       if (this.currentPage < this.totalPages - 2) {
         // Add ellipsis if current page is far from end
         this.pageNumbers.push(-2); // -2 represents ellipsis (to differentiate from first ellipsis)
       }
-      
+
       // Always include last page
       this.pageNumbers.push(this.totalPages);
     }
@@ -768,7 +777,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (page < 1 || page > this.totalPages) {
       return;
     }
-    
+
     this.currentPage = page;
     this.updateDisplayedRepositories();
     this.generatePageNumbers();
@@ -779,12 +788,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   formatDate(dateString: string): string {
     if (!dateString) return 'Unknown';
-    
+
     const date = new Date(dateString);
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays === 0) {
       return 'today';
     } else if (diffDays === 1) {
@@ -808,7 +817,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   getColorForLanguage(language: string): string {
     if (!language) return '#CCCCCC';
-    
+
     // Common language colors (similar to GitHub's language colors)
     const languageColors: { [key: string]: string } = {
       JavaScript: '#f1e05a',
@@ -827,7 +836,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       CSS: '#563d7c',
       Shell: '#89e051'
     };
-    
+
     // Return known language color or generate one from the name
     if (languageColors[language]) {
       return languageColors[language];
@@ -837,13 +846,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
       for (let i = 0; i < language.length; i++) {
         hash = language.charCodeAt(i) + ((hash << 5) - hash);
       }
-      
+
       let color = '#';
       for (let i = 0; i < 3; i++) {
         const value = (hash >> (i * 8)) & 0xFF;
         color += ('00' + value.toString(16)).substr(-2);
       }
-      
+
       return color;
     }
   }
@@ -874,27 +883,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   /**
    * Generate a README for a repository
    */
-  generateReadme(repositoryId: number): void {
-    console.log(`Generating README for repository ID ${repositoryId}...`);
-    this.generatingReadmes[repositoryId] = true;
-    
-    const generateSub = this.githubService.generateReadme(repositoryId).subscribe({
-      next: (response) => {
-        console.log('README generated successfully:', response);
-        this.generatingReadmes[repositoryId] = false;
-        
-        // Navigate to the new README
-        if (response && response.id) {
-          this.router.navigate(['/readmes', response.id]);
-        }
-      },
-      error: (error) => {
-        console.error('Failed to generate README:', error);
-        this.generatingReadmes[repositoryId] = false;
-      }
-    });
-    
-    this.subscriptions.add(generateSub);
+  generateReadme(repoUrl: string): void {
+    this.router.navigate(['/generate-readme', encodeURIComponent(repoUrl)]);
   }
 
   /**

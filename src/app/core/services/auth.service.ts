@@ -20,7 +20,7 @@
 //   private router = inject(Router);
 //   private tokenSubject = new BehaviorSubject<string | null>(null);
 //   private currentUserSubject = new BehaviorSubject<User | null>(null);
-  
+
 //   private readonly GITHUB_CLIENT_ID = environment.githubClientId;
 //   private readonly API_URL = environment.apiUrl;
 //   private isBrowser: boolean;
@@ -36,7 +36,7 @@
 
 //   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
 //     this.isBrowser = isPlatformBrowser(this.platformId);
-    
+
 //     // Only access browser APIs when in browser environment
 //     if (this.isBrowser) {
 //       const token = localStorage.getItem('access_token');
@@ -93,7 +93,7 @@
 //     if (!this.isBrowser) {
 //       return of(false);
 //     }
-    
+
 //     return this.tokenSubject.pipe(
 //       map((token: any) => !!token)
 //     );
@@ -129,7 +129,7 @@
 //       this.currentUserSubject.next(this.mockUser);
 //       return of(this.mockUser);
 //     }
-    
+
 //     // In production, fetch from API
 //     return this.http.get<User>(`${this.API_URL}/auth/me`).pipe(
 //       tap(user => {
@@ -159,7 +159,7 @@
 //       this.currentUserSubject.next(this.mockUser);
 //       return of(this.mockUser);
 //     }
-    
+
 //     // In production, update via API
 //     return this.http.patch<User>(`${this.API_URL}/user/profile`, updates).pipe(
 //       tap(user => {
@@ -189,13 +189,20 @@ export interface User {
   githubId?: string;
 }
 
+export interface LoginResponse {
+  status: string;
+  username: string;
+  installation_id: number;
+  token: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   private tokenSubject = new BehaviorSubject<string | null>(null);
   private currentUserSubject = new BehaviorSubject<User | null>(null);
-  
+
   private readonly GITHUB_CLIENT_ID = environment.githubClientId;
   private readonly API_URL = environment.apiUrl;
   private isBrowser: boolean;
@@ -212,7 +219,7 @@ export class AuthService {
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     this.isBrowser = isPlatformBrowser(this.platformId);
     console.log('AuthService initialized, isBrowser:', this.isBrowser);
-    
+
     // Only access browser APIs when in browser environment
     if (this.isBrowser) {
       const token = localStorage.getItem('access_token');
@@ -237,10 +244,54 @@ export class AuthService {
       const redirectUri = `${this.API_URL}/auth/callback`;
       console.log('Redirect URI:', redirectUri);
       console.log('Redirecting to GitHub OAuth page');
-      window.location.href = `https://github.com/login/oauth/authorize?client_id=${this.GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      // window.location.href = `https://github.com/login/oauth/authorize?client_id=${this.GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+      this.http.get<{ install_url: string, status: string }>(`${this.API_URL}/auth/login`, { responseType: 'json' }).subscribe({
+        next: (url) => {
+          console.log('Received redirect URL from API:', url);
+          if (url && url.install_url) {
+            window.location.href = url.install_url;
+          } else if (url && url.status === 'authenticated') {
+            console.log('Already authenticated, redirecting to dashboard');
+            this.router.navigate(['/dashboard']);
+          }
+        },
+        error: (err) => {
+          console.error('Error fetching GitHub redirect URL:', err);
+          this.clearAuth();
+        }
+      });
     } else {
       console.warn('Cannot redirect: not in browser environment');
     }
+  }
+
+  // login api that returns an observable
+
+  /**
+   * Handles the GitHub OAuth callback by exchanging the code for an access token.
+   * @param code The authorization code received from GitHub.
+   * @returns An observable that emits the login response.
+   */
+
+  login(): Observable<any> {
+    console.log('Handling GitHub login via header');
+    // The GitHub code is expected to be sent in the request header by the caller or interceptor.
+    return this.http.get<LoginResponse>(`${this.API_URL}/auth/login`).pipe(
+      tap((response: LoginResponse) => {
+        console.log('Login response received:', response);
+        console.log('Login response received:', response.token ? 'Token received' : 'No token');
+        // this.tokenSubject.next(response.token);
+        if (this.isBrowser) {
+          localStorage.setItem('current_session', JSON.stringify(response));
+          console.log('Token saved to localStorage');
+        }
+      }),
+      catchError(error => {
+        console.error('Error during GitHub login:', error);
+        this.clearAuth();
+        return throwError(() => error);
+      })
+    );
   }
 
   handleCallback(code: string): Observable<any> {
@@ -276,12 +327,25 @@ export class AuthService {
       console.log('Not in browser, returning not authenticated');
       return of(false);
     }
-    
-    const token = this.tokenSubject.value;
-    console.log('Checking authentication, token exists:', !!token);
-    
+
     return this.tokenSubject.pipe(
-      map((token: any) => !!token)
+      map((token: string | null) => {
+        // First check if we have a token in the subject
+        if (!token) {
+          // Double-check localStorage in case of race conditions
+          const storedToken = localStorage.getItem('access_token');
+          if (storedToken) {
+            // Update the subject if we found a token in localStorage
+            this.tokenSubject.next(storedToken);
+            return true;
+          }
+          return false;
+        }
+
+        // TODO: Add token expiration validation here
+        // For now, just check if token exists and is not empty
+        return token.length > 0;
+      })
     );
   }
 
@@ -324,7 +388,7 @@ export class AuthService {
       this.currentUserSubject.next(this.mockUser);
       return of(this.mockUser);
     }
-    
+
     // In production, fetch from API
     console.log('Fetching user from API');
     return this.http.get<User>(`${this.API_URL}/auth/me`).pipe(
@@ -350,7 +414,7 @@ export class AuthService {
       this.currentUserSubject.next(this.mockUser);
       return of(this.mockUser);
     }
-    
+
     // In production, update via API
     return this.http.patch<User>(`${this.API_URL}/user/profile`, updates).pipe(
       tap(user => {

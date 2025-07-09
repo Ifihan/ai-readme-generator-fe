@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
+import { PLATFORM_ID } from '@angular/core';
 
 @Component({
   selector: 'app-auth-callback',
@@ -48,29 +49,40 @@ import { AuthService } from '../../core/services/auth.service';
   `]
 })
 export class AuthCallbackComponent implements OnInit {
+  isBrowser: boolean;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   ngOnInit(): void {
     console.log('Auth callback component initialized');
-    
+
     this.route.queryParams.subscribe(params => {
-      const code = params['code'];
-      
+      const code = params['token'];
+      console.log('Received query params:', params);
+      console.log('GitHub auth code:', code);
+      // Only access localStorage if in a browser environment
+      if (this.isBrowser) {
+        localStorage.setItem('access_token', code || '');
+      }
       if (code) {
         console.log('GitHub auth code received, processing...');
-        
-        this.authService.handleCallback(code).subscribe({
+        this.router.navigate(['/dashboard']);
+
+        this.authService.login().subscribe({
           next: () => {
             console.log('Successfully authenticated, redirecting to dashboard');
             this.router.navigate(['/dashboard']);
           },
           error: (error) => {
-            console.error('Error during auth callback:', error);
-            this.router.navigate(['/']);
+            console.error('Error during authentication:', error);
+            // this.router.navigate(['/']);
           }
         });
       } else {
