@@ -1,178 +1,3 @@
-// import { Injectable, inject, PLATFORM_ID, Inject } from '@angular/core';
-// import { HttpClient } from '@angular/common/http';
-// import { Router } from '@angular/router';
-// import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
-// import { catchError, map, tap } from 'rxjs/operators';
-// import { environment } from '../../../environments/environment';
-// import { isPlatformBrowser } from '@angular/common';
-
-// export interface User {
-//   id: string;
-//   username: string;
-//   email?: string;
-//   avatarUrl?: string;
-//   githubId?: string;
-// }
-
-// @Injectable({ providedIn: 'root' })
-// export class AuthService {
-//   private http = inject(HttpClient);
-//   private router = inject(Router);
-//   private tokenSubject = new BehaviorSubject<string | null>(null);
-//   private currentUserSubject = new BehaviorSubject<User | null>(null);
-
-//   private readonly GITHUB_CLIENT_ID = environment.githubClientId;
-//   private readonly API_URL = environment.apiUrl;
-//   private isBrowser: boolean;
-
-//   // Mock user for development
-//   private mockUser: User = {
-//     id: 'user123',
-//     username: 'username',
-//     email: 'user@example.com',
-//     githubId: '12345',
-//     avatarUrl: 'https://github.com/identicons/username.png'
-//   };
-
-//   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
-//     this.isBrowser = isPlatformBrowser(this.platformId);
-
-//     // Only access browser APIs when in browser environment
-//     if (this.isBrowser) {
-//       const token = localStorage.getItem('access_token');
-//       if (token) {
-//         this.tokenSubject.next(token);
-//         // Fetch user info when service initializes with a token
-//         this.getCurrentUser().subscribe();
-//       }
-//     }
-//   }
-
-//   // loginWithGitHub(): void {
-//   //   if (this.isBrowser) {
-//   //     window.location.href = `https://github.com/login/oauth/authorize?client_id=${this.GITHUB_CLIENT_ID}&redirect_uri=${window.location.origin}/api/v1/auth/callback`;
-//   //   }
-//   // }
-
-//   loginWithGitHub(): void {
-//     if (this.isBrowser) {
-//       // Construct the redirect URI using the API_URL from environment
-//       const redirectUri = `${this.API_URL}/auth/callback`;
-//       window.location.href = `https://github.com/login/oauth/authorize?client_id=${this.GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-//     }
-//   }
-
-//   handleCallback(code: string): Observable<any> {
-//     return this.http.post(`${this.API_URL}/auth/login`, { code }).pipe(
-//       tap((response: any) => {
-//         this.tokenSubject.next(response.access_token);
-//         if (this.isBrowser) {
-//           localStorage.setItem('access_token', response.access_token);
-//         }
-//         // Fetch user info after successful login
-//         this.getCurrentUser().subscribe();
-//       }),
-//       catchError(error => {
-//         this.clearAuth();
-//         return throwError(() => error);
-//       })
-//     );
-//   }
-
-//   getToken(): Observable<string | null> {
-//     return this.tokenSubject.asObservable();
-//   }
-
-//   // isAuthenticated(): Observable<boolean> {
-//   //   return this.tokenSubject.pipe(
-//   //     map((token: any) => !!token)
-//   //   );
-//   // }
-
-//   isAuthenticated(): Observable<boolean> {
-//     if (!this.isBrowser) {
-//       return of(false);
-//     }
-
-//     return this.tokenSubject.pipe(
-//       map((token: any) => !!token)
-//     );
-//   }
-
-//   private clearAuth(): void {
-//     this.tokenSubject.next(null);
-//     this.currentUserSubject.next(null);
-//     if (this.isBrowser) {
-//       localStorage.removeItem('access_token');
-//     }
-//   }
-
-//   logout(): void {
-//     this.http.post(`${this.API_URL}/auth/logout`, {}).subscribe({
-//       next: () => {
-//         this.clearAuth();
-//         this.router.navigate(['/']);
-//       },
-//       error: () => this.clearAuth()
-//     });
-//   }
-
-//   // User management methods (merged from UserService)
-//   getCurrentUser(): Observable<User> {
-//     // Return cached user if available
-//     if (this.currentUserSubject.value) {
-//       return of(this.currentUserSubject.value);
-//     }
-
-//     // For development, return mock user
-//     if (environment.useMockData) {
-//       this.currentUserSubject.next(this.mockUser);
-//       return of(this.mockUser);
-//     }
-
-//     // In production, fetch from API
-//     return this.http.get<User>(`${this.API_URL}/auth/me`).pipe(
-//       tap(user => {
-//         this.currentUserSubject.next(user);
-//       }),
-//       catchError(error => {
-//         console.error('Error fetching current user', error);
-//         return throwError(() => error);
-//       })
-//     );
-//   }
-
-//   /**
-//    * Get user as observable for components to subscribe to
-//    */
-//   getUser(): Observable<User | null> {
-//     return this.currentUserSubject.asObservable();
-//   }
-
-//   /**
-//    * Update the current user's profile
-//    */
-//   updateProfile(updates: Partial<User>): Observable<User> {
-//     // For development, update mock user
-//     if (environment.useMockData) {
-//       this.mockUser = { ...this.mockUser, ...updates };
-//       this.currentUserSubject.next(this.mockUser);
-//       return of(this.mockUser);
-//     }
-
-//     // In production, update via API
-//     return this.http.patch<User>(`${this.API_URL}/user/profile`, updates).pipe(
-//       tap(user => {
-//         this.currentUserSubject.next(user);
-//       }),
-//       catchError(error => {
-//         console.error('Error updating profile', error);
-//         return throwError(() => error);
-//       })
-//     );
-//   }
-// }
-
 import { Injectable, inject, PLATFORM_ID, Inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -422,6 +247,48 @@ export class AuthService {
       }),
       catchError(error => {
         console.error('Error updating profile', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Refresh the authentication token.
+   * @param token Optional. If not provided, uses the current token from localStorage.
+   */
+  refreshToken(token?: string): Observable<any> {
+    const authToken = token || (this.isBrowser ? localStorage.getItem('access_token') : null);
+    if (!authToken) {
+      return throwError(() => new Error('No token available to refresh.'));
+    }
+    return this.http.post<any>(`${this.API_URL}/auth/refresh-token`, {}, {
+      headers: { Authorization: `Bearer ${authToken}` }
+    }).pipe(
+      tap(response => {
+        // Optionally update token in localStorage if new token is returned
+        if (response && response.access_token && this.isBrowser) {
+          localStorage.setItem('access_token', response.access_token);
+          this.tokenSubject.next(response.access_token);
+        }
+      }),
+      catchError(error => {
+        console.error('Error refreshing token', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  /**
+   * Verify a JWT token and return user information.
+   * @param token The JWT token to verify.
+   */
+  verifyToken(token: string): Observable<any> {
+    if (!token) {
+      return throwError(() => new Error('No token provided for verification.'));
+    }
+    return this.http.post<any>(`${this.API_URL}/auth/verify-token?token=${encodeURIComponent(token)}`, {}).pipe(
+      catchError(error => {
+        console.error('Error verifying token', error);
         return throwError(() => error);
       })
     );
