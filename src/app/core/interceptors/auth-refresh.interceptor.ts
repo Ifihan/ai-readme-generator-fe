@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Injector } from '@angular/core';
 import {
   HttpEvent,
   HttpHandler,
@@ -10,9 +10,10 @@ import { Observable, throwError, from } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
+
 @Injectable()
 export class AuthRefreshInterceptor implements HttpInterceptor {
-  private authService = inject(AuthService);
+  constructor(private injector: Injector) { }
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     // Only add auth header for API requests
@@ -32,8 +33,9 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
           !req.url.includes('/auth/refresh-token') &&
           !req.url.includes('/auth/login')
         ) {
-          // Try to refresh the token
-          return this.authService.refreshToken().pipe(
+          // Get AuthService at runtime to avoid circular DI
+          const authService = this.injector.get(AuthService);
+          return authService.refreshToken().pipe(
             switchMap(() => {
               const newToken = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null;
               if (newToken) {
@@ -42,11 +44,11 @@ export class AuthRefreshInterceptor implements HttpInterceptor {
                 });
                 return next.handle(retryReq);
               }
-              this.authService.logout();
+              authService.logout();
               return throwError(() => error);
             }),
             catchError(refreshError => {
-              this.authService.logout();
+              authService.logout();
               return throwError(() => refreshError);
             })
           );

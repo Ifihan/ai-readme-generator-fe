@@ -14,6 +14,25 @@ export interface User {
   githubId?: string;
 }
 
+export interface UserResponse {
+  username: string;
+  installation_id: number;
+  expires: number;
+  user_data: {
+    id: string;
+    username: string;
+    installation_id: number;
+    email: string | null;
+    full_name: string;
+    avatar_url: string;
+    github_id: number;
+    public_repos: number;
+    company: string | null;
+    created_at: string;
+    last_login: string;
+  };
+}
+
 export interface LoginResponse {
   status: string;
   username: string;
@@ -31,15 +50,6 @@ export class AuthService {
   private readonly GITHUB_CLIENT_ID = environment.githubClientId;
   private readonly API_URL = environment.apiUrl;
   private isBrowser: boolean;
-
-  // Mock user for development
-  private mockUser: User = {
-    id: 'user123',
-    username: 'username',
-    email: 'user@example.com',
-    githubId: '12345',
-    avatarUrl: 'https://github.com/identicons/username.png'
-  };
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -62,33 +72,7 @@ export class AuthService {
     }
   }
 
-  loginWithGitHub(): void {
-    console.log('Initiating GitHub login');
-    if (typeof window !== 'undefined') {
-      // Construct the redirect URI using the API_URL from environment
-      const redirectUri = `${this.API_URL}/auth/callback`;
-      console.log('Redirect URI:', redirectUri);
-      console.log('Redirecting to GitHub OAuth page');
-      // window.location.href = `https://github.com/login/oauth/authorize?client_id=${this.GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-      this.http.get<{ install_url: string, status: string }>(`${this.API_URL}/auth/login`, { responseType: 'json' }).subscribe({
-        next: (url) => {
-          console.log('Received redirect URL from API:', url);
-          if (url && url.install_url) {
-            window.location.href = url.install_url;
-          } else if (url && url.status === 'authenticated') {
-            console.log('Already authenticated, redirecting to dashboard');
-            this.router.navigate(['/dashboard']);
-          }
-        },
-        error: (err) => {
-          console.error('Error fetching GitHub redirect URL:', err);
-          this.clearAuth();
-        }
-      });
-    } else {
-      console.warn('Cannot redirect: not in browser environment');
-    }
-  }
+  // Removed legacy loginWithGitHub in favor of unified login() using OAuth endpoints
 
   // login api that returns an observable
 
@@ -99,20 +83,20 @@ export class AuthService {
    */
 
   login(): Observable<any> {
-    console.log('Handling GitHub login via header');
-    // The GitHub code is expected to be sent in the request header by the caller or interceptor.
-    return this.http.get<LoginResponse>(`${this.API_URL}/auth/login`).pipe(
-      tap((response: LoginResponse) => {
-        console.log('Login response received:', response);
-        console.log('Login response received:', response.token ? 'Token received' : 'No token');
-        // this.tokenSubject.next(response.token);
-        if (this.isBrowser) {
-          localStorage.setItem('current_session', JSON.stringify(response));
-          console.log('Token saved to localStorage');
+    console.log('Starting OAuth login flow');
+    return this.http.get<{ status: string; oauth_url?: string; message?: string }>(
+      `${this.API_URL}/auth/oauth/login`
+    ).pipe(
+      tap((response) => {
+        console.log('OAuth login response:', response);
+        if (this.isBrowser && response?.oauth_url) {
+          window.location.href = response.oauth_url;
+        } else {
+          console.warn('OAuth URL not provided in response');
         }
       }),
       catchError(error => {
-        console.error('Error during GitHub login:', error);
+        console.error('Error initiating OAuth login:', error);
         this.clearAuth();
         return throwError(() => error);
       })
@@ -120,24 +104,18 @@ export class AuthService {
   }
 
   handleCallback(code: string): Observable<any> {
-    console.log('Handling GitHub callback with code');
-    return this.http.post(`${this.API_URL}/auth/login`, { code }).pipe(
+    console.log('Handling OAuth callback with code');
+    return this.http.get<any>(`${this.API_URL}/auth/oauth/callback`, {
+      params: { code }
+    }).pipe(
       tap((response: any) => {
-        console.log('Login response received:', response.access_token ? 'Token received' : 'No token');
-        this.tokenSubject.next(response.access_token);
-        if (this.isBrowser) {
-          localStorage.setItem('access_token', response.access_token);
-          console.log('Token saved to localStorage');
-        }
-        // Fetch user info after successful login
-        this.getCurrentUser().subscribe({
-          next: user => console.log('User info fetched after login:', !!user),
-          error: err => console.error('Error fetching user after login:', err)
-        });
+        // We don't know the response model yet; log it for now
+        console.log('OAuth callback response:', response);
+        // Later: set tokens and load user here when model is confirmed
       }),
       catchError(error => {
-        console.error('Error handling GitHub callback:', error);
-        this.clearAuth();
+        console.error('Error handling OAuth callback:', error);
+        // Do not clear auth since this is initial login flow; just surface error
         return throwError(() => error);
       })
     );
@@ -180,6 +158,7 @@ export class AuthService {
     this.currentUserSubject.next(null);
     if (this.isBrowser) {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('current_session');
     }
   }
 
@@ -201,25 +180,47 @@ export class AuthService {
   // User management methods (merged from UserService)
   getCurrentUser(): Observable<User> {
     console.log('Getting current user');
-    // Return cached user if available
-    if (this.currentUserSubject.value) {
-      console.log('Returning cached user');
-      return of(this.currentUserSubject.value);
-    }
-
-    // For development, return mock user
-    if (environment.useMockData) {
-      console.log('Using mock user data');
-      this.currentUserSubject.next(this.mockUser);
-      return of(this.mockUser);
-    }
 
     // In production, fetch from API
     console.log('Fetching user from API');
-    return this.http.get<User>(`${this.API_URL}/auth/me`).pipe(
-      tap(user => {
-        console.log('User fetched from API:', user);
+    return this.http.get<UserResponse>(`${this.API_URL}/auth/me`).pipe(
+      tap(response => {
+        console.log('User response from API:', response);
+
+        // Store the entire response in localStorage
+        if (this.isBrowser) {
+          localStorage.setItem('user_session', JSON.stringify(response));
+        }
+
+        // Transform response to User interface and update subject
+        const user: User = {
+          id: response.user_data.id,
+          username: response.user_data.username,
+          email: response.user_data.email || undefined,
+          avatarUrl: response.user_data.avatar_url,
+          githubId: response.user_data.github_id.toString()
+        };
+
+        console.log('Transformed user:', user);
         this.currentUserSubject.next(user);
+
+        // Update token subject when user is fetched successfully
+        if (this.isBrowser) {
+          const token = localStorage.getItem('access_token');
+          if (token) {
+            this.tokenSubject.next(token);
+          }
+        }
+      }),
+      map(response => {
+        // Return transformed user
+        return {
+          id: response.user_data.id,
+          username: response.user_data.username,
+          email: response.user_data.email || undefined,
+          avatarUrl: response.user_data.avatar_url,
+          githubId: response.user_data.github_id.toString()
+        };
       }),
       catchError(error => {
         console.error('Error fetching current user', error);
@@ -233,13 +234,6 @@ export class AuthService {
   }
 
   updateProfile(updates: Partial<User>): Observable<User> {
-    // For development, update mock user
-    if (environment.useMockData) {
-      this.mockUser = { ...this.mockUser, ...updates };
-      this.currentUserSubject.next(this.mockUser);
-      return of(this.mockUser);
-    }
-
     // In production, update via API
     return this.http.patch<User>(`${this.API_URL}/user/profile`, updates).pipe(
       tap(user => {
@@ -292,5 +286,24 @@ export class AuthService {
         return throwError(() => error);
       })
     );
+  }
+
+  // New methods for GitHub App settings
+  /**
+   * Reinstall GitHub App to change permissions.
+   * Generates a reinstall URL for the GitHub App. (Authorization header is ignored)
+   */
+  public reinstallGitHubApp(): Observable<any> {
+    const url = `${this.API_URL}/auth/settings/reinstall`;
+    return this.http.post(url, {});
+  }
+
+  /**
+   * Revoke GitHub App installation and clear user data.
+   * (Authorization header is ignored)
+   */
+  public revokeGitHubApp(): Observable<any> {
+    const url = `${this.API_URL}/auth/settings/revoke`;
+    return this.http.delete(url);
   }
 }

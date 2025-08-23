@@ -17,4 +17,8 @@ export class PageLayoutComponent {
   handleImageError(event: any) {
     this.imageLoaded = false;
   }
+
+  goBack() {
+    window.history.back();
+  }
 }

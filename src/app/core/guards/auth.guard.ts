@@ -82,9 +82,9 @@ export class AuthGuard {
   ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
     console.log('AuthGuard.canActivate called for route:', state.url);
 
-    // If a token query parameter is present, bypass auth check to allow redirection in Dashboard
+    // If an OAuth token query parameter is present, bypass auth check to allow callback handling
     if (route.queryParamMap.has('token')) {
-      console.log('Token query parameter found, bypassing auth check');
+      console.log('OAuth token query parameter found, bypassing auth check');
       return true;
     }
 

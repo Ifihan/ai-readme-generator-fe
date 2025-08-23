@@ -17,15 +17,15 @@ export class LandingComponent implements OnInit, AfterViewInit {
   @ViewChild('logoImg') logoImg!: ElementRef;
   @ViewChild('demoImg') demoImg!: ElementRef;
   @ViewChild('footerLogoImg') footerLogoImg!: ElementRef;
-  
+
   // Image loading flags
   imageLoaded = false;
   demoImageLoaded = false;
   footerImageLoaded = false;
-  
+
   // Mobile menu state
   mobileMenuOpen = false;
-  
+
   // Current year for copyright
   currentYear = new Date().getFullYear();
 
@@ -80,7 +80,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
     forks: 42,
     contributors: 12
   };
-  
+
   // Just keep isBrowser for conditional rendering
   isBrowser: boolean;
 
@@ -98,7 +98,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
       // Setup scroll-related functionality
     }
   }
-  
+
   ngAfterViewInit(): void {
     // Setup smooth scrolling after view is initialized
     if (this.isBrowser) {
@@ -107,59 +107,59 @@ export class LandingComponent implements OnInit, AfterViewInit {
       }, 100);
     }
   }
-  
+
   setupSmoothScrolling(): void {
     // Add advanced smooth scrolling for all anchor links
     const navLinks = document.querySelectorAll('a[href^="#"]');
-    
+
     navLinks.forEach(link => {
       link.addEventListener('click', (e) => {
         e.preventDefault();
-        
+
         const targetId = (link as HTMLAnchorElement).getAttribute('href') || '';
         if (targetId === '#') return; // Skip empty links
-        
+
         const targetElement = document.querySelector(targetId);
-        
+
         if (targetElement) {
           // Calculate position with an offset for the header
           const headerHeight = document.querySelector('.header')?.clientHeight || 0;
           const targetPosition = targetElement.getBoundingClientRect().top + window.scrollY - headerHeight - 20;
-          
+
           // Animate scroll
           window.scrollTo({
             top: targetPosition,
             behavior: 'smooth'
           });
-          
+
           // Close mobile menu if open
           this.closeMobileMenu();
-          
+
           // Highlight the active nav link
           navLinks.forEach(navLink => {
             navLink.classList.remove('active');
           });
           link.classList.add('active');
-          
+
           // Update URL without causing a page jump
           window.history.pushState(null, '', targetId);
         }
       });
     });
-    
+
     // Add scroll spy to highlight the current section in the navigation
     window.addEventListener('scroll', this.scrollSpy.bind(this));
   }
-  
+
   scrollSpy(): void {
     // Get all sections and calculate which one is currently in view
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav-link');
-    
+
     sections.forEach(section => {
       const sectionTop = section.getBoundingClientRect().top;
       const headerHeight = document.querySelector('.header')?.clientHeight || 0;
-      
+
       // Check if section is in viewport (with offset for header)
       if (sectionTop <= headerHeight + 100 && sectionTop >= 0) {
         // Get the corresponding nav link
@@ -176,23 +176,23 @@ export class LandingComponent implements OnInit, AfterViewInit {
   }
 
   signInWithGitHub(): void {
-    this.authService.loginWithGitHub();
+    // Unified OAuth login
+    this.authService.login().subscribe();
   }
 
   handleGitHubLogin(): void {
     console.log('Login button clicked');
     if (this.isBrowser) {
-      // Only attempt to redirect if in a browser environment
-      this.authService.loginWithGitHub();
+      this.authService.login().subscribe();
     } else {
       console.warn('Cannot navigate: not in browser environment');
     }
   }
-  
+
   // Mobile menu methods
   toggleMobileMenu(): void {
     this.mobileMenuOpen = !this.mobileMenuOpen;
-    
+
     // Prevent scrolling when menu is open
     if (this.mobileMenuOpen) {
       document.body.classList.add('menu-open');
@@ -202,7 +202,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
       document.body.style.overflow = '';
     }
   }
-  
+
   closeMobileMenu(): void {
     if (this.mobileMenuOpen) {
       this.mobileMenuOpen = false;
@@ -210,7 +210,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
       document.body.style.overflow = '';
     }
   }
-  
+
   // Close mobile menu when clicking outside
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -218,18 +218,18 @@ export class LandingComponent implements OnInit, AfterViewInit {
     if (this.mobileMenuOpen) {
       const mobileMenuElement = document.querySelector('.mobile-nav');
       const menuButtonElement = document.querySelector('.mobile-menu-button');
-      
+
       if (mobileMenuElement && menuButtonElement) {
-        const isClickInside = mobileMenuElement.contains(event.target as Node) || 
-                              menuButtonElement.contains(event.target as Node);
-        
+        const isClickInside = mobileMenuElement.contains(event.target as Node) ||
+          menuButtonElement.contains(event.target as Node);
+
         if (!isClickInside) {
           this.closeMobileMenu();
         }
       }
     }
   }
-  
+
   // Close mobile menu on resize if screen becomes large enough
   @HostListener('window:resize')
   onResize(): void {
@@ -237,18 +237,18 @@ export class LandingComponent implements OnInit, AfterViewInit {
       this.closeMobileMenu();
     }
   }
-  
+
   // Image error handlers
   handleImageError(event: Event): void {
     this.imageLoaded = false;
     console.warn('Logo image failed to load');
   }
-  
+
   handleDemoImageError(event: Event): void {
     this.demoImageLoaded = false;
     console.warn('Demo image failed to load');
   }
-  
+
   handleFooterImageError(event: Event): void {
     this.footerImageLoaded = false;
     console.warn('Footer logo image failed to load');

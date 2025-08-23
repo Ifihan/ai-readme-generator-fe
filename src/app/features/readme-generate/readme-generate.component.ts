@@ -27,6 +27,13 @@ export class ReadmeGenerateComponent implements OnInit {
   loading = false;
   error: string | null = null;
 
+  // New properties for handling the generated README
+  generatedReadme: string = '';
+  sectionsIncluded: string[] = [];
+  showPreview = false;
+  saving = false;
+  downloading = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -43,6 +50,10 @@ export class ReadmeGenerateComponent implements OnInit {
     this.readmeService.getSectionTemplates().subscribe({
       next: (sections) => {
         this.sectionTemplates = sections;
+
+        // Auto-select sections that have is_default: true
+        this.selectedSections = sections.filter(section => section.is_default === true);
+
         this.loading = false;
       },
       error: (err) => {
@@ -67,30 +78,116 @@ export class ReadmeGenerateComponent implements OnInit {
 
   generateReadme() {
     if (!this.repoUrl || this.selectedSections.length === 0) return;
+
+    this.loading = true;
+    this.error = null;
+
     const sections: ReadmeSection[] = this.selectedSections.map((s, i) => ({
       name: s.name,
       description: s.description,
       required: s.is_default,
       order: i
     }));
+
     const payload: GenerateReadmeRequest = {
       repository_url: this.repoUrl,
       sections,
       include_badges: this.includeBadges,
       badge_style: this.badgeStyle
     };
-    // You can now call the service to generate the README or navigate to a preview page
+
     this.readmeService.generateReadme(payload).subscribe({
       next: (res) => {
-        // Handle the generated README (show preview, navigate, etc.)
-        // For now, just log it
-        console.log(res);
-        // Optionally, navigate to a preview page
+        this.generatedReadme = res.content;
+        this.sectionsIncluded = res.sections_included;
+        this.showPreview = true;
+        this.loading = false;
+        console.log('README generated successfully:', res);
       },
       error: (err) => {
         this.error = 'Failed to generate README.';
+        this.loading = false;
+        console.error('Generate README error:', err);
       }
     });
+  }
+
+  // Helper method to clean markdown content by removing code fences
+  private cleanMarkdownContent(content: string): string {
+    // Remove the opening ```markdown and closing ``` from the content
+    return content
+      .replace(/^```markdown\n/, '')
+      .replace(/\n```$/, '')
+      .trim();
+  }
+
+  downloadReadme() {
+    if (!this.generatedReadme) return;
+
+    this.downloading = true;
+    const cleanContent = this.cleanMarkdownContent(this.generatedReadme);
+    const payload = {
+      content: cleanContent,
+      repository_url: this.repoUrl
+    };
+
+    this.readmeService.downloadReadme(payload).subscribe({
+      next: (response) => {
+        // Create a blob and trigger download
+        const blob = new Blob([cleanContent], { type: 'text/markdown' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'README.md';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        this.downloading = false;
+        console.log('README downloaded successfully');
+      },
+      error: (err) => {
+        this.error = 'Failed to download README.';
+        this.downloading = false;
+        console.error('Download README error:', err);
+      }
+    });
+  }
+
+  saveToGitHub() {
+    if (!this.generatedReadme) return;
+
+    this.saving = true;
+    const cleanContent = this.cleanMarkdownContent(this.generatedReadme);
+    const payload = {
+      repository_url: this.repoUrl,
+      content: cleanContent,
+      path: 'README.md',
+      commit_message: 'Add generated README.md',
+      branch: 'main'
+    };
+
+    this.readmeService.saveReadmeToGithub(payload).subscribe({
+      next: (response) => {
+        this.saving = false;
+        // Show success message or navigate somewhere
+        console.log('README saved to GitHub successfully:', response);
+        alert('README saved to GitHub successfully!');
+      },
+      error: (err) => {
+        this.error = 'Failed to save README to GitHub.';
+        this.saving = false;
+        console.error('Save to GitHub error:', err);
+      }
+    });
+  }
+
+  backToForm() {
+    this.showPreview = false;
+    this.generatedReadme = '';
+    this.sectionsIncluded = [];
+    this.error = null;
   }
 
   formatBadgeStyle(style: string): string {

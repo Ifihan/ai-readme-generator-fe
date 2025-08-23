@@ -64,29 +64,31 @@ export class AuthCallbackComponent implements OnInit {
     console.log('Auth callback component initialized');
 
     this.route.queryParams.subscribe(params => {
-      const code = params['token'];
+      const token = params['token'];
       console.log('Received query params:', params);
-      console.log('GitHub auth code:', code);
-      // Only access localStorage if in a browser environment
-      if (this.isBrowser) {
-        localStorage.setItem('access_token', code || '');
-      }
-      if (code) {
-        console.log('GitHub auth code received, processing...');
-        this.router.navigate(['/dashboard']);
+      console.log('OAuth token:', token ? 'Token received' : 'No token');
 
-        this.authService.login().subscribe({
-          next: () => {
-            console.log('Successfully authenticated, redirecting to dashboard');
+      if (token && this.isBrowser) {
+        console.log('Processing OAuth token...');
+        // Store token in localStorage
+        localStorage.setItem('access_token', token);
+
+        // Fetch and store current user
+        this.authService.getCurrentUser().subscribe({
+          next: (user) => {
+            console.log('User fetched successfully:', user);
+            // Navigate to dashboard after successful authentication
             this.router.navigate(['/dashboard']);
           },
           error: (error) => {
-            console.error('Error during authentication:', error);
-            // this.router.navigate(['/']);
+            console.error('Error fetching user after token storage:', error);
+            // Clear token and redirect to landing on error
+            localStorage.removeItem('access_token');
+            this.router.navigate(['/']);
           }
         });
       } else {
-        console.warn('No code found in callback, redirecting to landing page');
+        console.warn('No OAuth token found in callback, redirecting to landing page');
         this.router.navigate(['/']);
       }
     });
