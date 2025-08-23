@@ -1,11 +1,13 @@
 import { Component, OnInit, isDevMode } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { NotificationContainerComponent } from './shared/components/notifications/notification-container.component';
+import { LoadingBarComponent } from './shared/components/loading-bar/loading-bar.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule],
+  imports: [RouterOutlet, CommonModule, NotificationContainerComponent, LoadingBarComponent],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })

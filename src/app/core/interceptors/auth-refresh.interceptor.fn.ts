@@ -1,11 +1,24 @@
 import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
+import { LoadingService } from '../services/loading.service';
 import { throwError } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { catchError, switchMap, finalize } from 'rxjs/operators';
 
 export const authRefreshInterceptor: HttpInterceptorFn = (req: HttpRequest<any>, next: HttpHandlerFn) => {
   const authService = inject(AuthService);
+  const loadingService = inject(LoadingService);
+
+  // Don't show loading for certain requests
+  const skipLoading = req.headers.has('skip-loading') ||
+    req.url.includes('/logout') ||
+    req.url.includes('/ping') ||
+    req.url.includes('/health');
+
+  if (!skipLoading) {
+    loadingService.show();
+  }
+
   let authReq = req;
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null;
   if (token && req.url.includes('/api/')) {
@@ -42,6 +55,11 @@ export const authRefreshInterceptor: HttpInterceptorFn = (req: HttpRequest<any>,
         );
       }
       return throwError(() => error);
+    }),
+    finalize(() => {
+      if (!skipLoading) {
+        loadingService.hide();
+      }
     })
   );
 };

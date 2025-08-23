@@ -94,7 +94,15 @@
       </div>
 
       <div class="preview-content">
-        <pre class="markdown-raw">{{ generatedReadme }}</pre>
+        <app-markdown-editor
+          [(ngModel)]="editableReadme"
+          [originalContent]="generatedReadme"
+          [showPreview]="true"
+          [minHeight]="'400px'"
+          placeholder="Edit your README content here..."
+          (contentChanged)="onReadmeEdit()"
+          (resetRequested)="onResetRequested()">
+        </app-markdown-editor>
       </div>
 
       <div class="preview-actions">

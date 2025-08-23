@@ -8,6 +8,7 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 import { AuthService } from '../../core/services/auth.service';
 import { GithubService, Repository } from '../../core/services/github.service';
+import { STORAGE_KEYS } from '../../core/constants/app.constants';
 
 // Define the NavItem interface directly in the component file
 interface NavItem {
@@ -113,9 +114,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.authService.getCurrentUser().subscribe(user => {
-      // this.currentUser = user;
-    });
+    if (this.isBrowser) {
+      const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) || '';
+      this.authService.getCurrentUser(token).subscribe(user => {
+        // this.currentUser = user;
+      });
+    }
   }
 
   ngOnDestroy(): void {

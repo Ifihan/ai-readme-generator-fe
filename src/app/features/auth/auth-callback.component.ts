@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
 import { PLATFORM_ID } from '@angular/core';
+import { STORAGE_KEYS } from '../../core/constants/app.constants';
 
 @Component({
   selector: 'app-auth-callback',
@@ -61,30 +62,30 @@ export class AuthCallbackComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log('Auth callback component initialized');
+    // console.log('Auth callback component initialized');
 
     this.route.queryParams.subscribe(params => {
       const token = params['token'];
-      console.log('Received query params:', params);
-      console.log('OAuth token:', token ? 'Token received' : 'No token');
+      // console.log('Received query params:', params);
+      // console.log('OAuth token:', token ? 'Token received' : 'No token');
 
       if (token && this.isBrowser) {
-        console.log('Processing OAuth token...');
+        // console.log('Processing OAuth token...');
         // Store token in localStorage
-        localStorage.setItem('access_token', token);
+        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
 
         // Fetch and store current user
-        this.authService.getCurrentUser().subscribe({
+        this.authService.getCurrentUser(token).subscribe({
           next: (user) => {
-            console.log('User fetched successfully:', user);
+            // console.log('User fetched successfully:', user);
             // Navigate to dashboard after successful authentication
             this.router.navigate(['/dashboard']);
           },
           error: (error) => {
-            console.error('Error fetching user after token storage:', error);
-            // Clear token and redirect to landing on error
-            localStorage.removeItem('access_token');
-            this.router.navigate(['/']);
+            // console.error('Error fetching user after token storage:', error);
+            // // Clear token and redirect to landing on error
+            // localStorage.removeItem('access_token');
+            // this.router.navigate(['/']);
           }
         });
       } else {

@@ -110,6 +110,152 @@ h2 {
   overflow-y: auto;
 }
 
+/* Tab Navigation */
+.preview-tabs {
+  display: flex;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.tab-button.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tab-button svg {
+  transition: transform 0.2s ease;
+}
+
+.tab-button:hover svg {
+  transform: scale(1.1);
+}
+
+.edit-indicator {
+  color: #ff6b6b;
+  font-size: 12px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Edit Mode Styles */
+.edit-container {
+  padding: 0;
+}
+
+.markdown-editor {
+  width: 100%;
+  min-height: 400px;
+  padding: 20px;
+  border: none;
+  outline: none;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  resize: vertical;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.markdown-editor::placeholder {
+  color: var(--text-placeholder);
+}
+
+.edit-help {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.help-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.help-text svg {
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.char-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.reset-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--primary);
+}
+
+.char-count {
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.modified-badge {
+  padding: 2px 8px;
+  background: #ff6b6b;
+  color: white;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
 .markdown-raw {
   padding: 20px;
   margin: 0;
@@ -182,6 +328,16 @@ h2 {
     align-items: flex-start;
   }
 
+  .preview-tabs {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .tab-button {
+    flex: 1;
+    justify-content: center;
+  }
+
   .preview-actions {
     flex-direction: column;
     align-items: center;
@@ -191,6 +347,21 @@ h2 {
   .btn-github {
     width: 100%;
     max-width: 250px;
+  }
+
+  .markdown-editor {
+    font-size: 14px;
+    min-height: 300px;
+  }
+
+  .edit-help {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .char-info {
+    align-self: flex-end;
   }
 }
 

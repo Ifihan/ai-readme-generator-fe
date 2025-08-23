@@ -1,0 +1,70 @@
+.loading-bar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  height: 3px;
+}
+
+.loading-bar {
+  height: 100%;
+  background: rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.loading-bar-progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #4caf50, var(--primary));
+  background-size: 200% 100%;
+  animation: loadingAnimation 2s ease-in-out infinite;
+  width: 100%;
+}
+
+@keyframes loadingAnimation {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Alternative pulsing animation */
+.loading-bar-progress-pulse {
+  height: 100%;
+  background: var(--primary);
+  animation: pulse 1.5s ease-in-out infinite;
+  width: 100%;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Gradient moving animation */
+.loading-bar-progress-gradient {
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  background-size: 50% 100%;
+  animation: gradientMove 1.5s ease-in-out infinite;
+  width: 100%;
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: -50% 0;
+  }
+  100% {
+    background-position: 150% 0;
+  }
+}

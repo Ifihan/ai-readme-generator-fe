@@ -9,7 +9,7 @@ export const STORAGE_KEYS = {
 // API endpoints
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/auth/oauth/login',
+    LOGIN: '/auth/login',
     CALLBACK: '/auth/oauth/callback',
     LOGOUT: '/auth/logout',
     ME: '/auth/me',
@@ -25,7 +25,7 @@ export const API_ENDPOINTS = {
   README: {
     GENERATE: '/readme/generate',
     REFINE: '/readme/refine',
-    TEMPLATES: '/readme/templates',
+    TEMPLATES: '/readme/sections',
     SAVE: '/readme/save',
     DOWNLOAD: '/readme/download'
   }

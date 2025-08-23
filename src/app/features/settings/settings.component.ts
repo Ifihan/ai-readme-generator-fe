@@ -18,6 +18,7 @@ export class SettingsComponent implements OnInit {
   loading: boolean = false;
   error: string = '';
   processing: boolean = false;
+  showRevokeConfirm: boolean = false;
 
   constructor(
     private authService: AuthService,
@@ -66,24 +67,38 @@ export class SettingsComponent implements OnInit {
     });
   }
 
-  onRevoke(): void {
-    this.processing = true;
+  confirmRevoke(): void {
+    this.showRevokeConfirm = true;
     this.message = '';
     this.error = '';
+  }
 
+  cancelRevoke(): void {
+    this.showRevokeConfirm = false;
+  }
+
+  proceedRevoke(): void {
+    this.processing = true;
     this.authService.revokeGitHubApp().subscribe({
       next: () => {
         this.message = 'GitHub App revoked successfully';
         this.processing = false;
-        // Clear user session after revocation
+        this.showRevokeConfirm = false;
+        // Clear session via AuthService for consistency
+        this.authService.clearAuth();
         localStorage.removeItem('user_session');
-        localStorage.removeItem('access_token');
         this.userSession = null;
       },
-      error: (err) => {
+      error: () => {
         this.error = 'Error revoking GitHub App';
         this.processing = false;
+        this.showRevokeConfirm = false;
       }
     });
+  }
+
+  onLogout(): void {
+    this.authService.clearAuth();
+    localStorage.removeItem('user_session');
   }
 }

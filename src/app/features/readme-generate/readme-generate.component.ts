@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ReadmeService } from '../../core/services/readme.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PageLayoutComponent } from '../../shared/components/page-layout/page-layout.component';
+import { MarkdownEditorComponent } from '../../shared/components/markdown-editor/markdown-editor/markdown-editor.component';
 import { SectionTemplate, ReadmeSection, GenerateReadmeRequest } from '../../core/models/readme.model';
 
 @Component({
@@ -14,7 +16,8 @@ import { SectionTemplate, ReadmeSection, GenerateReadmeRequest } from '../../cor
     CommonModule,
     FormsModule,
     RouterModule,
-    PageLayoutComponent
+    PageLayoutComponent,
+    MarkdownEditorComponent
   ],
   standalone: true
 })
@@ -30,6 +33,7 @@ export class ReadmeGenerateComponent implements OnInit {
 
   // New properties for handling the generated README
   generatedReadme: string = '';
+  editableReadme: string = '';
   sectionsIncluded: string[] = [];
   showPreview = false;
   saving = false;
@@ -38,7 +42,8 @@ export class ReadmeGenerateComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private readmeService: ReadmeService
+    private readmeService: ReadmeService,
+    private notificationService: NotificationService
   ) { }
 
   ngOnInit(): void {
@@ -99,7 +104,9 @@ export class ReadmeGenerateComponent implements OnInit {
 
     this.readmeService.generateReadme(payload).subscribe({
       next: (res) => {
+        res.content = this.cleanMarkdownContent(res.content);
         this.generatedReadme = res.content;
+        this.editableReadme = res.content; // Initialize editable copy
         this.sectionsIncluded = res.sections_included;
         this.showPreview = true;
         this.loading = false;
@@ -120,43 +127,40 @@ export class ReadmeGenerateComponent implements OnInit {
       .trim();
   }
 
+  onReadmeEdit() {
+    // This method can be used for any real-time editing logic if needed
+    // For now, the two-way binding handles the content updates
+  }
+
+  onResetRequested() {
+    this.notificationService.success('Content reset to original generated version');
+  }
+
   downloadReadme() {
-    if (!this.generatedReadme) return;
+    if (!this.editableReadme) return;
 
     this.downloading = true;
-    const cleanContent = this.cleanMarkdownContent(this.generatedReadme);
-    const payload = {
-      content: cleanContent,
-      repository_url: this.repoUrl
-    };
+    const cleanContent = this.cleanMarkdownContent(this.editableReadme);
+    // just create a blob and trigger download
+    const blob = new Blob([cleanContent], { type: 'text/markdown' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'README.md';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
 
-    this.readmeService.downloadReadme(payload).subscribe({
-      next: (response) => {
-        // Create a blob and trigger download
-        const blob = new Blob([cleanContent], { type: 'text/markdown' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'README.md';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-
-        this.downloading = false;
-      },
-      error: (err) => {
-        this.error = 'Failed to download README.';
-        this.downloading = false;
-      }
-    });
+    this.downloading = false;
+    this.notificationService.success('README downloaded successfully!');
   }
 
   saveToGitHub() {
-    if (!this.generatedReadme) return;
+    if (!this.editableReadme) return;
 
     this.saving = true;
-    const cleanContent = this.cleanMarkdownContent(this.generatedReadme);
+    const cleanContent = this.cleanMarkdownContent(this.editableReadme);
     const payload = {
       repository_url: this.repoUrl,
       content: cleanContent,
@@ -168,11 +172,11 @@ export class ReadmeGenerateComponent implements OnInit {
     this.readmeService.saveReadmeToGithub(payload).subscribe({
       next: (response) => {
         this.saving = false;
-        // Show success message
-        alert('README saved to GitHub successfully!');
+        this.notificationService.success('README saved to GitHub successfully!');
       },
       error: (err) => {
         this.error = 'Failed to save README to GitHub.';
+        this.notificationService.error('Failed to save README to GitHub.');
         this.saving = false;
       }
     });
@@ -181,6 +185,7 @@ export class ReadmeGenerateComponent implements OnInit {
   backToForm() {
     this.showPreview = false;
     this.generatedReadme = '';
+    this.editableReadme = '';
     this.sectionsIncluded = [];
     this.error = null;
   }

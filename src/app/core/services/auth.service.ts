@@ -41,7 +41,7 @@ export class AuthService {
       if (token) {
         this.tokenSubject.next(token);
         // Fetch user info when service initializes with a token
-        this.getCurrentUser().subscribe({
+        this.getCurrentUser(token).subscribe({
           next: user => {
             // User loaded successfully
           },
@@ -123,13 +123,15 @@ export class AuthService {
     );
   }
 
-  private clearAuth(): void {
+  public clearAuth(): void {
     this.tokenSubject.next(null);
     this.currentUserSubject.next(null);
     if (this.isBrowser) {
       localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.CURRENT_SESSION);
     }
+    this.notificationService.info('You have been logged out.');
+    window.location.href = ROUTES.LANDING;
   }
 
   logout(): void {
@@ -147,7 +149,7 @@ export class AuthService {
   }
 
   // User management methods (merged from UserService)
-  getCurrentUser(): Observable<User | null> {
+  getCurrentUser(toekn: string): Observable<User | null> {
     if (!this.isBrowser) {
       return of(null);
     }
@@ -155,6 +157,7 @@ export class AuthService {
     return this.http.get<UserResponse>(`${this.API_URL}${API_ENDPOINTS.AUTH.ME}`).pipe(
       tap((response: UserResponse) => {
         // Store the full response in localStorage for future use
+        // localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, this.tokenSubject.value || '');
         localStorage.setItem(STORAGE_KEYS.USER_SESSION, JSON.stringify(response));
 
         // Transform the response to match our User interface
@@ -180,7 +183,8 @@ export class AuthService {
         return user;
       }),
       catchError(error => {
-        this.clearAuth();
+        // this.clearAuth();
+        // this.notificationService.error('Error fetching user data');
         return throwError(() => error);
       })
     );

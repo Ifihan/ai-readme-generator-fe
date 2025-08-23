@@ -70,12 +70,20 @@
           <span *ngIf="!processing">Reinstall GitHub App</span>
           <span *ngIf="processing">Processing...</span>
         </button>
-        <button type="button" class="btn-danger" (click)="onRevoke()" [disabled]="processing">
+        <button type="button" class="btn-danger" (click)="confirmRevoke()" [disabled]="processing">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
           <span *ngIf="!processing">Revoke GitHub App</span>
           <span *ngIf="processing">Processing...</span>
+        </button>
+
+        <button type="button" class="btn-secondary" (click)="onLogout()" [disabled]="processing">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11 5V4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Logout</span>
         </button>
       </div>
     </div>
@@ -91,6 +99,22 @@
           <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" stroke-width="2"/>
         </svg>
         {{ message }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-backdrop" *ngIf="showRevokeConfirm"></div>
+  <div class="modal" *ngIf="showRevokeConfirm" role="dialog" aria-modal="true" aria-labelledby="revoke-title">
+    <div class="modal-content">
+      <h3 id="revoke-title">Revoke GitHub App?</h3>
+      <p>This will disconnect the app from your GitHub account. You can reconnect later. Continue?</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="cancelRevoke()">Cancel</button>
+        <button class="btn-danger" (click)="proceedRevoke()" [disabled]="processing">
+          <span *ngIf="!processing">Revoke</span>
+          <span *ngIf="processing">Processing...</span>
+        </button>
       </div>
     </div>
   </div>
