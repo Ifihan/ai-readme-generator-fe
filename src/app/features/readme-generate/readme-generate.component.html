@@ -1,0 +1,139 @@
+<app-page-layout [showBackButton]="true">
+  <div class="readme-generate-wrapper">
+
+    <!-- Form Section (hidden when preview is shown) -->
+    <div *ngIf="!showPreview">
+      <h2>Generate README for Repository</h2>
+      <p class="repo-url">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>{{ repoUrl }}</span>
+      </p>
+
+      <div *ngIf="loading" class="loading-message">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-spin">
+          <path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span *ngIf="!showPreview">Loading section templates...</span>
+        <span *ngIf="showPreview">Generating README...</span>
+      </div>
+
+      <div *ngIf="error" class="error">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+            stroke="currentColor" stroke-width="2"/>
+        </svg>
+        {{ error }}
+      </div>
+
+      <form *ngIf="!loading && sectionTemplates.length" (ngSubmit)="generateReadme()">
+        <div class="sections-container">
+          <h3>Select Sections</h3>
+          <div class="sections-list">
+            <label *ngFor="let section of sectionTemplates" class="section-item">
+              <input type="checkbox" [checked]="isSelected(section)" (change)="toggleSection(section)">
+              <div class="section-content">
+                <span class="section-name">{{ section.name }}</span>
+                <span class="section-desc">{{ section.description }}</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="options">
+          <label>
+            <input type="checkbox" [(ngModel)]="includeBadges" name="includeBadges">
+            Include Repository Badges
+          </label>
+          <label>
+            Badge Style:
+            <select [(ngModel)]="badgeStyle" name="badgeStyle">
+              <option *ngFor="let style of badgeStyles" [value]="style">{{ formatBadgeStyle(style) }}</option>
+            </select>
+          </label>
+        </div>
+
+        <button type="submit" [disabled]="selectedSections.length === 0 || loading">
+          <span *ngIf="!loading">Generate README</span>
+          <span *ngIf="loading">Generating...</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Preview Section -->
+    <div *ngIf="showPreview" class="preview-section">
+      <div class="preview-header">
+        <h2>Generated README Preview</h2>
+        <button type="button" class="back-button" (click)="backToForm()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back to Form
+        </button>
+      </div>
+
+      <div class="repo-info">
+        <p class="repo-url">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>{{ repoUrl }}</span>
+        </p>
+
+        <div class="sections-included" *ngIf="sectionsIncluded.length">
+          <h4>Sections Included:</h4>
+          <div class="section-tags">
+            <span *ngFor="let section of sectionsIncluded" class="section-tag">{{ section }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-content">
+        <app-markdown-editor
+          [(ngModel)]="editableReadme"
+          [originalContent]="generatedReadme"
+          [showPreview]="true"
+          [minHeight]="'400px'"
+          placeholder="Edit your README content here..."
+          (contentChanged)="onReadmeEdit()"
+          (resetRequested)="onResetRequested()">
+        </app-markdown-editor>
+      </div>
+
+      <div class="preview-actions">
+        <button type="button" class="btn-primary" (click)="downloadReadme()" [disabled]="downloading">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span *ngIf="!downloading">Download README</span>
+          <span *ngIf="downloading">Downloading...</span>
+        </button>
+
+        <button type="button" class="btn-github" (click)="saveToGitHub()" [disabled]="saving">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span *ngIf="!saving">Save to GitHub</span>
+          <span *ngIf="saving">Saving...</span>
+        </button>
+      </div>
+
+      <div *ngIf="error" class="error">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+            stroke="currentColor" stroke-width="2"/>
+        </svg>
+        {{ error }}
+      </div>
+    </div>
+  </div>
+</app-page-layout>

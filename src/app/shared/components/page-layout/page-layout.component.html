@@ -1,0 +1,36 @@
+<header class="header">
+  <div class="container">
+    <div class="header-content">
+      <!-- Back Button -->
+      <button *ngIf="showBackButton" class="back-button" (click)="goBack()" aria-label="Go back">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <!-- Logo -->
+      <div class="logo">
+        <a routerLink="/" class="logo-link">
+          <svg *ngIf="!imageLoaded" class="logo-image" width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="6" fill="var(--primary)"/>
+            <text x="16" y="20" fill="white" text-anchor="middle" font-size="18" font-weight="bold">R</text>
+          </svg>
+          <img #logoImg src="assets/images/logo.svg" alt="Readme AI Logo" class="logo-image"
+               (error)="handleImageError($event)"
+               (load)="imageLoaded = true"
+               [style.display]="imageLoaded ? 'block' : 'none'">
+          <span class="logo-text">Readme AI</span>
+        </a>
+      </div>
+
+      <!-- Theme Toggle -->
+      <app-theme-toggle></app-theme-toggle>
+    </div>
+  </div>
+</header>
+
+<main class="main-content">
+  <div class="container">
+    <ng-content></ng-content>
+  </div>
+</main>

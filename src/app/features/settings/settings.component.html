@@ -1,0 +1,121 @@
+<app-page-layout [showBackButton]="true">
+  <div class="settings-wrapper">
+    <h2>User Settings</h2>
+
+    <div *ngIf="loading" class="loading-message">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-spin">
+        <path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Loading user settings...
+    </div>
+
+    <div *ngIf="error" class="error">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+          stroke="currentColor" stroke-width="2"/>
+      </svg>
+      {{ error }}
+    </div>
+
+    <div class="user-details" *ngIf="userSession && !loading; else noUser">
+      <div class="user-card">
+        <div class="user-avatar" *ngIf="userSession.user_data?.avatar_url">
+          <img [src]="userSession.user_data.avatar_url" [alt]="userSession.username" />
+        </div>
+        <div class="user-info">
+          <h3>{{ userSession.user_data?.full_name || userSession.username }}</h3>
+          <div class="user-details-grid">
+            <div class="detail-item">
+              <span class="label">Username:</span>
+              <span class="value">{{ userSession.username }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Public Repos:</span>
+              <span class="value">{{ userSession.user_data?.public_repos || 0 }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Installation:</span>
+              <a class="value link" [href]="'https://github.com/settings/installations/' + userSession.installation_id" target="_blank" rel="noopener">
+              View installation settings on GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noUser>
+      <div class="no-user" *ngIf="!loading">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <p>No user session found.</p>
+      </div>
+    </ng-template>
+
+    <div class="github-settings" *ngIf="userSession && !loading">
+      <h3>GitHub App Settings</h3>
+      <p class="settings-description">Manage your GitHub App installation and permissions</p>
+
+      <div class="actions">
+        <button type="button" class="btn-primary" (click)="onReinstall()" [disabled]="processing">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 4V10H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M23 20V14H17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14L18.36 18.36A9 9 0 0 1 3.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span *ngIf="!processing">Reinstall GitHub App</span>
+          <span *ngIf="processing">Processing...</span>
+        </button>
+        <button type="button" class="btn-danger" (click)="confirmRevoke()" [disabled]="processing">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span *ngIf="!processing">Revoke GitHub App</span>
+          <span *ngIf="processing">Processing...</span>
+        </button>
+
+        <button type="button" class="btn-secondary" (click)="onLogout()" [disabled]="processing">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11 5V4a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="message" *ngIf="message">
+      <div [class]="message.includes('Error') ? 'error' : 'success'">
+        <svg *ngIf="!message.includes('Error')" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <svg *ngIf="message.includes('Error')" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        {{ message }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirmation Modal -->
+  <div class="modal-backdrop" *ngIf="showRevokeConfirm"></div>
+  <div class="modal" *ngIf="showRevokeConfirm" role="dialog" aria-modal="true" aria-labelledby="revoke-title">
+    <div class="modal-content">
+      <h3 id="revoke-title">Revoke GitHub App?</h3>
+      <p>This will disconnect the app from your GitHub account. You can reconnect later. Continue?</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="cancelRevoke()">Cancel</button>
+        <button class="btn-danger" (click)="proceedRevoke()" [disabled]="processing">
+          <span *ngIf="!processing">Revoke</span>
+          <span *ngIf="processing">Processing...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</app-page-layout>

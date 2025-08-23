@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
+import { PLATFORM_ID } from '@angular/core';
+import { STORAGE_KEYS } from '../../core/constants/app.constants';
 
 @Component({
   selector: 'app-auth-callback',
@@ -48,33 +50,46 @@ import { AuthService } from '../../core/services/auth.service';
   `]
 })
 export class AuthCallbackComponent implements OnInit {
+  isBrowser: boolean;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private authService: AuthService
-  ) {}
+    private authService: AuthService,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   ngOnInit(): void {
-    console.log('Auth callback component initialized');
-    
+    // console.log('Auth callback component initialized');
+
     this.route.queryParams.subscribe(params => {
-      const code = params['code'];
-      
-      if (code) {
-        console.log('GitHub auth code received, processing...');
-        
-        this.authService.handleCallback(code).subscribe({
-          next: () => {
-            console.log('Successfully authenticated, redirecting to dashboard');
+      const token = params['token'];
+      // console.log('Received query params:', params);
+      // console.log('OAuth token:', token ? 'Token received' : 'No token');
+
+      if (token && this.isBrowser) {
+        // console.log('Processing OAuth token...');
+        // Store token in localStorage
+        localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+
+        // Fetch and store current user
+        this.authService.getCurrentUser(token).subscribe({
+          next: (user) => {
+            // console.log('User fetched successfully:', user);
+            // Navigate to dashboard after successful authentication
             this.router.navigate(['/dashboard']);
           },
           error: (error) => {
-            console.error('Error during auth callback:', error);
-            this.router.navigate(['/']);
+            // console.error('Error fetching user after token storage:', error);
+            // // Clear token and redirect to landing on error
+            // localStorage.removeItem('access_token');
+            // this.router.navigate(['/']);
           }
         });
       } else {
-        console.warn('No code found in callback, redirecting to landing page');
+        console.warn('No OAuth token found in callback, redirecting to landing page');
         this.router.navigate(['/']);
       }
     });
