@@ -1,0 +1,7 @@
+env:
+  - variable: GITHUB_CLIENT_ID
+    secret: GITHUB_CLIENT_ID
+  - variable: GITHUB_CLIENT_APP_ID
+    secret: GITHUB_CLIENT_APP_ID
+  - variable: API_URL
+    secret: API_URL
