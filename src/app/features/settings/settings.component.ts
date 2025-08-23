@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { PageLayoutComponent } from '../../shared/components/page-layout/page-layout.component';
+import { STORAGE_KEYS, ERROR_MESSAGES, SUCCESS_MESSAGES } from '../../core/constants/app.constants';
 
 @Component({
   selector: 'app-settings',
@@ -17,7 +19,10 @@ export class SettingsComponent implements OnInit {
   error: string = '';
   processing: boolean = false;
 
-  constructor(private authService: AuthService) { }
+  constructor(
+    private authService: AuthService,
+    private notificationService: NotificationService
+  ) { }
 
   ngOnInit(): void {
     this.loading = true;
@@ -29,7 +34,6 @@ export class SettingsComponent implements OnInit {
       }
     } catch (err) {
       this.error = 'Error loading user session.';
-      console.error('Error parsing user session:', err);
     }
     this.loading = false;
   }
@@ -41,8 +45,6 @@ export class SettingsComponent implements OnInit {
 
     this.authService.reinstallGitHubApp().subscribe({
       next: (response: any) => {
-        console.log('Reinstall response:', response);
-
         if (response?.install_url) {
           // Redirect user to the GitHub App configuration URL
           this.message = response.message || 'Redirecting to GitHub App configuration...';
@@ -59,7 +61,6 @@ export class SettingsComponent implements OnInit {
       },
       error: (err) => {
         this.error = 'Error initiating GitHub App reinstall';
-        console.error('Reinstall error:', err);
         this.processing = false;
       }
     });
@@ -81,7 +82,6 @@ export class SettingsComponent implements OnInit {
       },
       error: (err) => {
         this.error = 'Error revoking GitHub App';
-        console.error('Revoke error:', err);
         this.processing = false;
       }
     });

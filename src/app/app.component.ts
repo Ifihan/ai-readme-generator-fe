@@ -31,9 +31,7 @@ export class AppComponent implements OnInit {
         }
       });
     } else {
-      if (isDevMode()) {
-        console.warn('window is not available');
-      }
+      // Server-side rendering - skip media query listener
     }
   }
 }

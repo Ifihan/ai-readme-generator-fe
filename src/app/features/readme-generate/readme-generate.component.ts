@@ -1,9 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { ReadmeService, SectionTemplate, ReadmeSection, GenerateReadmeRequest } from '../../core/services/readme.service';
+import { ReadmeService } from '../../core/services/readme.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PageLayoutComponent } from '../../shared/components/page-layout/page-layout.component';
+import { SectionTemplate, ReadmeSection, GenerateReadmeRequest } from '../../core/models/readme.model';
 
 @Component({
   selector: 'app-readme-generate',
@@ -102,12 +103,10 @@ export class ReadmeGenerateComponent implements OnInit {
         this.sectionsIncluded = res.sections_included;
         this.showPreview = true;
         this.loading = false;
-        console.log('README generated successfully:', res);
       },
       error: (err) => {
         this.error = 'Failed to generate README.';
         this.loading = false;
-        console.error('Generate README error:', err);
       }
     });
   }
@@ -145,12 +144,10 @@ export class ReadmeGenerateComponent implements OnInit {
         window.URL.revokeObjectURL(url);
 
         this.downloading = false;
-        console.log('README downloaded successfully');
       },
       error: (err) => {
         this.error = 'Failed to download README.';
         this.downloading = false;
-        console.error('Download README error:', err);
       }
     });
   }
@@ -171,14 +168,12 @@ export class ReadmeGenerateComponent implements OnInit {
     this.readmeService.saveReadmeToGithub(payload).subscribe({
       next: (response) => {
         this.saving = false;
-        // Show success message or navigate somewhere
-        console.log('README saved to GitHub successfully:', response);
+        // Show success message
         alert('README saved to GitHub successfully!');
       },
       error: (err) => {
         this.error = 'Failed to save README to GitHub.';
         this.saving = false;
-        console.error('Save to GitHub error:', err);
       }
     });
   }

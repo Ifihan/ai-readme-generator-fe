@@ -44,7 +44,7 @@ export class ThemeToggleComponent implements OnInit {
 
   setTheme(theme: 'light' | 'dark' | 'system'): void {
     if (!this.isBrowser) return;
-    
+
     this.currentTheme = theme;
     localStorage.setItem('theme', theme);
     this.applyTheme(theme);
@@ -55,7 +55,7 @@ export class ThemeToggleComponent implements OnInit {
 
     // Set the data-theme attribute on root element
     this.renderer.setAttribute(this.document.documentElement, 'data-theme', theme);
-    
+
     if (theme === 'system') {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       this.toggleDarkClass(prefersDark);
@@ -79,13 +79,13 @@ export class ThemeToggleComponent implements OnInit {
     if (!this.isBrowser) return;
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    
+
     const listener = (e: MediaQueryListEvent) => {
       if (this.currentTheme === 'system') {
         this.toggleDarkClass(e.matches);
       }
     };
-    
+
     try {
       // Modern browsers
       mediaQuery.addEventListener('change', listener);
@@ -95,7 +95,7 @@ export class ThemeToggleComponent implements OnInit {
         // @ts-ignore - For older browser support
         mediaQuery.addListener(listener);
       } catch (error) {
-        console.error('Could not add media query listener', error);
+        // Silently fail if media query listener cannot be added
       }
     }
   }

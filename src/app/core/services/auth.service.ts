@@ -5,33 +5,12 @@ import { Observable, BehaviorSubject, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { isPlatformBrowser } from '@angular/common';
+import { STORAGE_KEYS, API_ENDPOINTS, ROUTES, ERROR_MESSAGES } from '../constants/app.constants';
+import { NotificationService } from './notification.service';
+import { LoggerService } from './logger.service';
+import { User, UserResponse } from '../models/user.model';
 
-export interface User {
-  id: string;
-  username: string;
-  email?: string;
-  avatarUrl?: string;
-  githubId?: string;
-}
 
-export interface UserResponse {
-  username: string;
-  installation_id: number;
-  expires: number;
-  user_data: {
-    id: string;
-    username: string;
-    installation_id: number;
-    email: string | null;
-    full_name: string;
-    avatar_url: string;
-    github_id: number;
-    public_repos: number;
-    company: string | null;
-    created_at: string;
-    last_login: string;
-  };
-}
 
 export interface LoginResponse {
   status: string;
@@ -44,6 +23,8 @@ export interface LoginResponse {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private notificationService = inject(NotificationService);
+  private logger = inject(LoggerService);
   private tokenSubject = new BehaviorSubject<string | null>(null);
   private currentUserSubject = new BehaviorSubject<User | null>(null);
 
@@ -53,21 +34,21 @@ export class AuthService {
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     this.isBrowser = isPlatformBrowser(this.platformId);
-    console.log('AuthService initialized, isBrowser:', this.isBrowser);
 
     // Only access browser APIs when in browser environment
     if (this.isBrowser) {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
       if (token) {
-        console.log('Token found in localStorage');
         this.tokenSubject.next(token);
         // Fetch user info when service initializes with a token
         this.getCurrentUser().subscribe({
-          next: user => console.log('User loaded on init:', !!user),
-          error: err => console.error('Error loading user on init:', err)
+          next: user => {
+            // User loaded successfully
+          },
+          error: err => {
+            // Handle error silently or log to external service
+          }
         });
-      } else {
-        console.log('No token found in localStorage');
       }
     }
   }
@@ -83,20 +64,15 @@ export class AuthService {
    */
 
   login(): Observable<any> {
-    console.log('Starting OAuth login flow');
     return this.http.get<{ status: string; oauth_url?: string; message?: string }>(
-      `${this.API_URL}/auth/oauth/login`
+      `${this.API_URL}${API_ENDPOINTS.AUTH.LOGIN}`
     ).pipe(
       tap((response) => {
-        console.log('OAuth login response:', response);
         if (this.isBrowser && response?.oauth_url) {
           window.location.href = response.oauth_url;
-        } else {
-          console.warn('OAuth URL not provided in response');
         }
       }),
       catchError(error => {
-        console.error('Error initiating OAuth login:', error);
         this.clearAuth();
         return throwError(() => error);
       })
@@ -104,18 +80,14 @@ export class AuthService {
   }
 
   handleCallback(code: string): Observable<any> {
-    console.log('Handling OAuth callback with code');
-    return this.http.get<any>(`${this.API_URL}/auth/oauth/callback`, {
+    return this.http.get<any>(`${this.API_URL}${API_ENDPOINTS.AUTH.CALLBACK}`, {
       params: { code }
     }).pipe(
       tap((response: any) => {
-        // We don't know the response model yet; log it for now
-        console.log('OAuth callback response:', response);
-        // Later: set tokens and load user here when model is confirmed
+        // Handle callback response
       }),
       catchError(error => {
-        console.error('Error handling OAuth callback:', error);
-        // Do not clear auth since this is initial login flow; just surface error
+        this.clearAuth();
         return throwError(() => error);
       })
     );
@@ -127,7 +99,6 @@ export class AuthService {
 
   isAuthenticated(): Observable<boolean> {
     if (!this.isBrowser) {
-      console.log('Not in browser, returning not authenticated');
       return of(false);
     }
 
@@ -136,7 +107,7 @@ export class AuthService {
         // First check if we have a token in the subject
         if (!token) {
           // Double-check localStorage in case of race conditions
-          const storedToken = localStorage.getItem('access_token');
+          const storedToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
           if (storedToken) {
             // Update the subject if we found a token in localStorage
             this.tokenSubject.next(storedToken);
@@ -153,77 +124,63 @@ export class AuthService {
   }
 
   private clearAuth(): void {
-    console.log('Clearing authentication data');
     this.tokenSubject.next(null);
     this.currentUserSubject.next(null);
     if (this.isBrowser) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('current_session');
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_SESSION);
     }
   }
 
   logout(): void {
-    console.log('Logging out user');
-    this.http.post(`${this.API_URL}/auth/logout`, {}).subscribe({
+    this.http.post(`${this.API_URL}${API_ENDPOINTS.AUTH.LOGOUT}`, {}).subscribe({
       next: () => {
         this.clearAuth();
-        this.router.navigate(['/']);
-        console.log('Logout successful, redirected to landing page');
+        this.router.navigate([ROUTES.LANDING]);
       },
       error: (err) => {
-        console.error('Logout error:', err);
+        // Even if logout fails on server, clear local auth
         this.clearAuth();
+        this.router.navigate([ROUTES.LANDING]);
       }
     });
   }
 
   // User management methods (merged from UserService)
-  getCurrentUser(): Observable<User> {
-    console.log('Getting current user');
+  getCurrentUser(): Observable<User | null> {
+    if (!this.isBrowser) {
+      return of(null);
+    }
 
-    // In production, fetch from API
-    console.log('Fetching user from API');
-    return this.http.get<UserResponse>(`${this.API_URL}/auth/me`).pipe(
-      tap(response => {
-        console.log('User response from API:', response);
+    return this.http.get<UserResponse>(`${this.API_URL}${API_ENDPOINTS.AUTH.ME}`).pipe(
+      tap((response: UserResponse) => {
+        // Store the full response in localStorage for future use
+        localStorage.setItem(STORAGE_KEYS.USER_SESSION, JSON.stringify(response));
 
-        // Store the entire response in localStorage
-        if (this.isBrowser) {
-          localStorage.setItem('user_session', JSON.stringify(response));
-        }
-
-        // Transform response to User interface and update subject
+        // Transform the response to match our User interface
         const user: User = {
           id: response.user_data.id,
           username: response.user_data.username,
           email: response.user_data.email || undefined,
           avatarUrl: response.user_data.avatar_url,
-          githubId: response.user_data.github_id.toString()
+          githubId: response.user_data.github_id?.toString()
         };
 
-        console.log('Transformed user:', user);
         this.currentUserSubject.next(user);
-
-        // Update token subject when user is fetched successfully
-        if (this.isBrowser) {
-          const token = localStorage.getItem('access_token');
-          if (token) {
-            this.tokenSubject.next(token);
-          }
-        }
+        return user;
       }),
-      map(response => {
-        // Return transformed user
-        return {
+      map((response: UserResponse) => {
+        const user: User = {
           id: response.user_data.id,
           username: response.user_data.username,
           email: response.user_data.email || undefined,
           avatarUrl: response.user_data.avatar_url,
-          githubId: response.user_data.github_id.toString()
+          githubId: response.user_data.github_id?.toString()
         };
+        return user;
       }),
       catchError(error => {
-        console.error('Error fetching current user', error);
+        this.clearAuth();
         return throwError(() => error);
       })
     );
@@ -261,12 +218,12 @@ export class AuthService {
       tap(response => {
         // Optionally update token in localStorage if new token is returned
         if (response && response.access_token && this.isBrowser) {
-          localStorage.setItem('access_token', response.access_token);
+          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, response.access_token);
           this.tokenSubject.next(response.access_token);
         }
       }),
       catchError(error => {
-        console.error('Error refreshing token', error);
+        this.logger.error('Error refreshing token', error);
         return throwError(() => error);
       })
     );
@@ -280,9 +237,8 @@ export class AuthService {
     if (!token) {
       return throwError(() => new Error('No token provided for verification.'));
     }
-    return this.http.post<any>(`${this.API_URL}/auth/verify-token?token=${encodeURIComponent(token)}`, {}).pipe(
+    return this.http.post<any>(`${this.API_URL}${API_ENDPOINTS.AUTH.VERIFY}?token=${encodeURIComponent(token)}`, {}).pipe(
       catchError(error => {
-        console.error('Error verifying token', error);
         return throwError(() => error);
       })
     );
@@ -291,19 +247,15 @@ export class AuthService {
   // New methods for GitHub App settings
   /**
    * Reinstall GitHub App to change permissions.
-   * Generates a reinstall URL for the GitHub App. (Authorization header is ignored)
    */
   public reinstallGitHubApp(): Observable<any> {
-    const url = `${this.API_URL}/auth/settings/reinstall`;
-    return this.http.post(url, {});
+    return this.http.post(`${this.API_URL}${API_ENDPOINTS.AUTH.REINSTALL}`, {});
   }
 
   /**
    * Revoke GitHub App installation and clear user data.
-   * (Authorization header is ignored)
    */
   public revokeGitHubApp(): Observable<any> {
-    const url = `${this.API_URL}/auth/settings/revoke`;
-    return this.http.delete(url);
+    return this.http.delete(`${this.API_URL}${API_ENDPOINTS.AUTH.REVOKE}`);
   }
 }
