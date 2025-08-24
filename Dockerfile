@@ -1,5 +1,5 @@
-# Use Node.js 18 as base image
-FROM node:18-alpine AS build
+# Use Node.js 20 as base image (marked requires node >= 20)
+FROM node:20-alpine AS build
 
 # Set working directory
 WORKDIR /app
@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (including dev dependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
