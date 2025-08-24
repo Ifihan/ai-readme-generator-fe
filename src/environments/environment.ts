@@ -1,7 +1,7 @@
 export const environment = {
   production: false,
-  githubClientId: process.env['GITHUB_CLIENT_ID'] || '',
-  githubClientAppId: process.env['GITHUB_CLIENT_APP_ID'] || '',
+  githubClientId: '',
+  githubClientAppId: '',
   useMockData: false,
-  apiUrl: process.env['API_URL'] || ''
+  apiUrl: 'http://localhost:8000'
 };
