@@ -1,5 +1,5 @@
 export const environment = {
-  production: true,
+  production: false,
   githubClientId: process.env['GITHUB_CLIENT_ID'] || '',
   githubClientAppId: process.env['GITHUB_CLIENT_APP_ID'] || '',
   useMockData: false,
