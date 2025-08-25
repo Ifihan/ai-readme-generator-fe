@@ -1,0 +1,71 @@
+# Cloud Build pipeline for Cloud Run deployment
+# - Loads secrets from Secret Manager into env vars
+# - Writes Angular production environment file
+# - Builds & pushes Docker image (Dockerfile builds the Angular app)
+# - Deploys to Cloud Run
+
+substitutions:
+  _REGION: us-central1           # Change to your region (e.g., europe-west1)
+  _REPOSITORY: web                # Artifact Registry repository name
+  _SERVICE: ai-readme-generator-fe  # Cloud Run service name
+
+steps:
+  # 1) Create the Angular prod environment file using secrets
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    secretEnv:
+      - API_BASE_URL
+      - GIITH_CLIENT_ID
+      - GIITH_CLIENT_APP_ID
+    args:
+      - -lc
+      - |
+        set -euo pipefail
+        mkdir -p src/environments
+        cat > src/environments/environment.prod.ts << EOF
+        export const environment = {
+          production: true,
+          githubClientId: '${GIITH_CLIENT_ID}',
+          githubClientAppId: '${GIITH_CLIENT_APP_ID}',
+          useMockData: false,
+          apiUrl: '${API_BASE_URL}'
+        };
+        EOF
+        echo "[cloudbuild] Wrote src/environments/environment.prod.ts"
+
+  # 2) Build the Docker image (Angular build runs inside Dockerfile)
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - '-t'
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA'
+      - '.'
+
+  # 3) Push the image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA'
+
+  # 4) Deploy to Cloud Run
+  - name: gcr.io/cloud-builders/gcloud
+    args:
+      - run
+      - deploy
+      - $_SERVICE
+      - '--image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA'
+      - '--region=$_REGION'
+      - '--platform=managed'
+      # - '--allow-unauthenticated'  # Uncomment if you want public access
+
+images:
+  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA'
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/API_BASE_URL/versions/latest
+      env: API_BASE_URL
+    - versionName: projects/$PROJECT_ID/secrets/GIITH_CLIENT_ID/versions/latest
+      env: GIITH_CLIENT_ID
+    - versionName: projects/$PROJECT_ID/secrets/GIITH_CLIENT_APP_ID/versions/latest
+      env: GIITH_CLIENT_APP_ID
