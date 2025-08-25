@@ -1,13 +1,7 @@
-# Cloud Build pipeline for Cloud Run deployment
-# - Loads secrets from Secret Manager into env vars
-# - Writes Angular production environment file
-# - Builds & pushes Docker image (Dockerfile builds the Angular app)
-# - Deploys to Cloud Run
-
 substitutions:
-  _REGION: us-central1           # Change to your region (e.g., europe-west1)
-  _REPOSITORY: web                # Artifact Registry repository name
-  _SERVICE: ai-readme-generator-fe  # Cloud Run service name
+  _REGION: us-central1 # Change to your region (e.g., europe-west1)
+  _REPOSITORY: web # Artifact Registry repository name
+  _SERVICE: ai-readme-generator # Cloud Run service name
 
 steps:
   # 1) Create the Angular prod environment file using secrets
@@ -37,15 +31,15 @@ steps:
   - name: gcr.io/cloud-builders/docker
     args:
       - build
-      - '-t'
-      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA'
-      - '.'
+      - "-t"
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA"
+      - "."
 
   # 3) Push the image
   - name: gcr.io/cloud-builders/docker
     args:
       - push
-      - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA'
+      - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA"
 
   # 4) Deploy to Cloud Run
   - name: gcr.io/cloud-builders/gcloud
@@ -53,13 +47,13 @@ steps:
       - run
       - deploy
       - $_SERVICE
-      - '--image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA'
-      - '--region=$_REGION'
-      - '--platform=managed'
+      - "--image=$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA"
+      - "--region=$_REGION"
+      - "--platform=managed"
       # - '--allow-unauthenticated'  # Uncomment if you want public access
 
 images:
-  - '$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA'
+  - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPOSITORY/$_SERVICE:$SHORT_SHA"
 
 availableSecrets:
   secretManager:
