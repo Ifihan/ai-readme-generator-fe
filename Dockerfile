@@ -14,13 +14,13 @@ RUN npm ci
 COPY . .
 
 # Build the Angular app
-# RUN npm run build
+RUN npm run build
 
 # Production stage
 FROM nginx:alpine
 
-# Copy dist folder to nginx
-COPY dist /usr/share/nginx/html
+# Copy built app to nginx
+COPY --from=build /app/dist/ai-readme-generator-fe/browser /usr/share/nginx/html
 
 # Expose port
 EXPOSE 8080
