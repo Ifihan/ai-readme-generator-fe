@@ -22,6 +22,9 @@ FROM nginx:alpine
 # Copy built app to nginx
 COPY --from=build /app/dist/ai-readme-generator-fe/browser /usr/share/nginx/html
 
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
 # Expose port
 EXPOSE 8080
 
