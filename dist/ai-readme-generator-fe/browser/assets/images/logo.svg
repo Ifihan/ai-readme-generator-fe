@@ -1,0 +1,15 @@
+<svg width="220" height="180" viewBox="0 0 220 180" xmlns="http://www.w3.org/2000/svg">
+  <!-- File icon with a folded corner -->
+  <path d="M40,20 H140 L180,60 V160 H40 Z" fill="none" stroke="black" stroke-width="3"/>
+  <polyline points="140,20 140,60 180,60" fill="none" stroke="black" stroke-width="3"/>
+  
+  <!-- AI text in a monospaced style -->
+  <text x="110" y="90" text-anchor="middle" fill="black" font-size="36" font-family="monospace" font-weight="bold">
+    AI
+  </text>
+  
+  <!-- readme.md text indicating the file type -->
+  <text x="110" y="130" text-anchor="middle" fill="black" font-size="16" font-family="monospace">
+    readme.md
+  </text>
+</svg>

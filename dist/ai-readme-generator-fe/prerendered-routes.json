@@ -1,0 +1,8 @@
+{
+  "routes": {
+    "/": {},
+    "/auth/callback": {},
+    "/dashboard": {},
+    "/settings": {}
+  }
+}
