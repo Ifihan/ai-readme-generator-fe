@@ -15,8 +15,8 @@ export const API_ENDPOINTS = {
     ME: '/auth/me',
     REFRESH: '/auth/refresh-token',
     VERIFY: '/auth/verify-token',
-    REINSTALL: '/api/v1/auth/settings/reinstall',
-    REVOKE: '/api/v1/auth/settings/revoke'
+    REINSTALL: '/auth/settings/reinstall',
+    REVOKE: '/auth/settings/revoke'
   },
   GITHUB: {
     INSTALLATIONS: '/github/installations',
