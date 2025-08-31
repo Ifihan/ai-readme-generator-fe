@@ -34,18 +34,62 @@
       
       <!-- GitHub Stats in Header -->
       <div class="github-stats-header">
-        <a href="https://github.com/username/readmeai" class="stat-link" title="Star on GitHub">
-          <i class="star-icon"></i>
-          <span class="stat-count">{{ githubStats.stars }}</span>
-        </a>
-        <a href="https://github.com/username/readmeai/fork" class="stat-link" title="Fork on GitHub">
-          <i class="fork-icon"></i>
-          <span class="stat-count">{{ githubStats.forks }}</span>
-        </a>
-        <a href="https://github.com/username/readmeai/contribute" class="contribute-link" title="Contribute on GitHub">
+        <!-- Stars Dropdown -->
+        <div class="stat-dropdown" (mouseenter)="showStarsDropdown = true" (mouseleave)="showStarsDropdown = false">
+          <button type="button" class="stat-link" title="Star repositories">
+            <i class="star-icon"></i>
+            <span class="stat-count">{{ totalStats.stars }}</span>
+          </button>
+          <div class="dropdown-menu" [class.show]="showStarsDropdown">
+            <div class="dropdown-item" (click)="navigateToRepo('frontend', 'star')">
+              <span class="repo-name">{{ repoStats.frontend.name }}</span>
+              <span class="repo-stats">⭐ {{ repoStats.frontend.stars }}</span>
+            </div>
+            <div class="dropdown-item" (click)="navigateToRepo('backend', 'star')">
+              <span class="repo-name">{{ repoStats.backend.name }}</span>
+              <span class="repo-stats">⭐ {{ repoStats.backend.stars }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Forks Dropdown -->
+        <div class="stat-dropdown" (mouseenter)="showForksDropdown = true" (mouseleave)="showForksDropdown = false">
+          <button type="button" class="stat-link" title="Fork repositories">
+            <i class="fork-icon"></i>
+            <span class="stat-count">{{ totalStats.forks }}</span>
+          </button>
+          <div class="dropdown-menu" [class.show]="showForksDropdown">
+            <div class="dropdown-item" (click)="navigateToRepo('frontend', 'fork')">
+              <span class="repo-name">{{ repoStats.frontend.name }}</span>
+              <span class="repo-stats">🍴 {{ repoStats.frontend.forks }}</span>
+            </div>
+            <div class="dropdown-item" (click)="navigateToRepo('backend', 'fork')">
+              <span class="repo-name">{{ repoStats.backend.name }}</span>
+              <span class="repo-stats">🍴 {{ repoStats.backend.forks }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contribute Dropdown -->
+        <div class="stat-dropdown" (mouseenter)="showContributeDropdown = true" (mouseleave)="showContributeDropdown = false">
+          <button type="button" class="stat-link" title="Contribute to repositories">
+            <i class="contribute-icon"></i>
+          </button>
+          <div class="dropdown-menu" [class.show]="showContributeDropdown">
+            <div class="dropdown-item" (click)="navigateToRepo('frontend', 'contribute')">
+              <span class="repo-name">{{ repoStats.frontend.name }}</span>
+            </div>
+            <div class="dropdown-item" (click)="navigateToRepo('backend', 'contribute')">
+              <span class="repo-name">{{ repoStats.backend.name }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- GitHub Sign In Button -->
+        <button type="button" class="github-signin-link" (click)="handleGitHubLogin()" title="Sign in with GitHub">
           <i class="github-icon"></i>
-          <span>Contribute</span>
-        </a>
+          <span>Sign in with GitHub</span>
+        </button>
       </div>
     </div>
   </div>
@@ -60,6 +104,34 @@
     <li class="mobile-nav-item">
       <a href="#how-it-works" class="mobile-nav-link" (click)="closeMobileMenu()">How it works</a>
     </li>
+    <li class="mobile-nav-item mobile-github-stats">
+      <div class="mobile-stats-container">
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('frontend', 'star'); closeMobileMenu()">
+          <i class="star-icon"></i>
+          <span>Star Frontend ({{ repoStats.frontend.stars }})</span>
+        </button>
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('backend', 'star'); closeMobileMenu()">
+          <i class="star-icon"></i>
+          <span>Star Backend ({{ repoStats.backend.stars }})</span>
+        </button>
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('frontend', 'fork'); closeMobileMenu()">
+          <i class="fork-icon"></i>
+          <span>Fork Frontend ({{ repoStats.frontend.forks }})</span>
+        </button>
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('backend', 'fork'); closeMobileMenu()">
+          <i class="fork-icon"></i>
+          <span>Fork Backend ({{ repoStats.backend.forks }})</span>
+        </button>
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('frontend', 'contribute'); closeMobileMenu()">
+          <i class="contribute-icon"></i>
+          <span>Contribute to Frontend</span>
+        </button>
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('backend', 'contribute'); closeMobileMenu()">
+          <i class="contribute-icon"></i>
+          <span>Contribute to Backend</span>
+        </button>
+      </div>
+    </li>
   </ul>
 </nav>
 
@@ -72,7 +144,7 @@
         Connect your GitHub repositories and create professional READMEs in seconds with our AI-powered generator.
       </p>
       <div class="cta-button animate-slide-up-delayed">
-        <button class="btn btn-primary animate-pulse" (click)="handleGitHubLogin()">
+        <button type="button" class="btn btn-primary animate-pulse" (click)="handleGitHubLogin()">
           <i class="github-icon"></i> Sign in with GitHub
         </button>
       </div>
@@ -130,6 +202,7 @@
       }
     </div>
   </section>
+
 </main>
 
 <!-- Theme Toggle - using the shared component -->
@@ -164,16 +237,15 @@
         <div class="footer-links-column">
           <h3 class="footer-heading">Resources</h3>
           <ul class="footer-list">
-            <li><a href="#api">API</a></li>
-            <li><a href="#blog">Blog</a></li>
+            <li><a href="https://ai-readme-generator-be-912048666815.us-central1.run.app/" target="_blank">API</a></li>
           </ul>
         </div>
         
         <div class="footer-links-column">
           <h3 class="footer-heading">About</h3>
           <ul class="footer-list">
-            <li><a href="#about">About me</a></li>
-            <li><a href="#contact">Contact</a></li>
+            <li><a href="/about">About me</a></li>
+            <!-- <li><a href="#contact">Contact</a></li> -->
           </ul>
         </div>
       </div>
@@ -181,9 +253,9 @@
     
     <div class="social-links-container">
       <div class="social-links">
-        <a href="#twitter" class="social-link"><i class="twitter-icon"></i></a>
-        <a href="#github" class="social-link"><i class="github-icon"></i></a>
-        <a href="#linkedin" class="social-link"><i class="linkedin-icon"></i></a>
+        <a href="https://x.com/ifihan_" class="social-link" target="_blank"><i class="twitter-icon"></i></a>
+        <a href="https://github.com/Ifihan" class="social-link" target="_blank"><i class="github-icon"></i></a>
+        <a href="https://linkedin.com/in/ifihan-olusheye" class="social-link" target="_blank"><i class="linkedin-icon"></i></a>
       </div>
     </div>
     
