@@ -4,7 +4,8 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { GithubService } from '../../core/services/github.service';
 import { AuthService } from '../../core/services/auth.service';
-import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component'; // Import the shared component
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-landing',
@@ -74,18 +75,34 @@ export class LandingComponent implements OnInit, AfterViewInit {
     }
   ];
 
-  // Placeholder for GitHub stats
-  githubStats = {
-    stars: 256,
-    forks: 42,
-    contributors: 12
+  // GitHub repository configurations
+  repositories = {
+    frontend: { owner: 'Ifihan', repo: 'ai-readme-generator-fe' },
+    backend: { owner: 'Ifihan', repo: 'ai-readme-generator-be' }
   };
+
+  // Repository stats
+  repoStats = {
+    frontend: { stars: 0, forks: 0, name: 'Frontend', html_url: '' },
+    backend: { stars: 0, forks: 0, name: 'Backend', html_url: '' }
+  };
+
+  // Combined stats for header display
+  totalStats = {
+    stars: 0,
+    forks: 0
+  };
+
+  // Dropdown states
+  showStarsDropdown = false;
+  showForksDropdown = false;
+  showContributeDropdown = false;
 
   // Just keep isBrowser for conditional rendering
   isBrowser: boolean;
 
   constructor(
-    // private githubService: GithubService,
+    private githubService: GithubService,
     private authService: AuthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
@@ -95,7 +112,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     // Theme initialization is now handled by ThemeToggleComponent
     if (this.isBrowser) {
-      // Setup scroll-related functionality
+      this.loadGitHubStats();
     }
   }
 
@@ -252,5 +269,84 @@ export class LandingComponent implements OnInit, AfterViewInit {
   handleFooterImageError(event: Event): void {
     this.footerImageLoaded = false;
     console.warn('Footer logo image failed to load');
+  }
+
+
+  // Load GitHub repository statistics
+  loadGitHubStats(): void {
+    const frontendStats$ = this.githubService.getRepositoryStats(
+      this.repositories.frontend.owner, 
+      this.repositories.frontend.repo
+    );
+    const backendStats$ = this.githubService.getRepositoryStats(
+      this.repositories.backend.owner, 
+      this.repositories.backend.repo
+    );
+
+    forkJoin([frontendStats$, backendStats$]).subscribe({
+      next: ([frontendData, backendData]) => {
+        this.repoStats.frontend = {
+          stars: frontendData.stars,
+          forks: frontendData.forks,
+          name: 'Frontend',
+          html_url: frontendData.html_url
+        };
+        this.repoStats.backend = {
+          stars: backendData.stars,
+          forks: backendData.forks,
+          name: 'Backend',
+          html_url: backendData.html_url
+        };
+
+        this.totalStats.stars = this.repoStats.frontend.stars + this.repoStats.backend.stars;
+        this.totalStats.forks = this.repoStats.frontend.forks + this.repoStats.backend.forks;
+      },
+      error: (error) => {
+        console.error('Error loading GitHub stats:', error);
+        // Fallback to demo numbers
+        this.totalStats = { stars: 256, forks: 42 };
+        this.repoStats.frontend = { stars: 200, forks: 30, name: 'Frontend', html_url: '' };
+        this.repoStats.backend = { stars: 56, forks: 12, name: 'Backend', html_url: '' };
+      }
+    });
+  }
+
+  // Dropdown interaction methods
+  toggleStarsDropdown(): void {
+    this.showStarsDropdown = !this.showStarsDropdown;
+    this.showForksDropdown = false;
+    this.showContributeDropdown = false;
+  }
+
+  toggleForksDropdown(): void {
+    this.showForksDropdown = !this.showForksDropdown;
+    this.showStarsDropdown = false;
+    this.showContributeDropdown = false;
+  }
+
+  toggleContributeDropdown(): void {
+    this.showContributeDropdown = !this.showContributeDropdown;
+    this.showStarsDropdown = false;
+    this.showForksDropdown = false;
+  }
+
+  hideDropdowns(): void {
+    this.showStarsDropdown = false;
+    this.showForksDropdown = false;
+    this.showContributeDropdown = false;
+  }
+
+  navigateToRepo(type: 'frontend' | 'backend', action: 'star' | 'fork' | 'contribute'): void {
+    const repo = this.repoStats[type];
+    if (repo.html_url) {
+      let url = repo.html_url;
+      if (action === 'fork') {
+        url = `${repo.html_url}/fork`;
+      } else if (action === 'contribute') {
+        url = `${repo.html_url}/issues`;
+      }
+      window.open(url, '_blank');
+    }
+    this.hideDropdowns();
   }
 }
