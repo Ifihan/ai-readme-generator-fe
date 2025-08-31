@@ -186,6 +186,43 @@
   color: var(--primary);
 }
 
+/* Mobile GitHub Stats */
+.mobile-github-stats {
+  border-bottom: none;
+  padding: 16px 24px;
+}
+
+.mobile-stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-stat-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.mobile-stat-button:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary);
+}
+
+.mobile-stat-button i {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+}
+
 /* Animation for mobile menu opening */
 @keyframes slideInDown {
   from {
@@ -1029,20 +1066,79 @@ html {
 }
 
 /* Responsive adjustments */
-@media (max-width: 900px) {
+@media (max-width: 1200px) {
+  .github-stats-header {
+    gap: 8px;
+  }
+  
+  /* Make stat buttons more compact */
+  .stat-link {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  
+  .stat-count {
+    margin-left: 4px;
+  }
+  
+  /* Make dropdowns more compact */
+  .dropdown-menu {
+    min-width: 160px;
+  }
+  
+  .dropdown-item {
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 1024px) {
   .nav-menu {
     position: static;
     transform: none;
     margin-left: auto;
-    margin-right: 24px;
+    margin-right: 12px;
   }
   
   .github-stats-header {
-    justify-content: flex-end;
+    gap: 6px;
   }
   
+  .github-signin-link span {
+    display: none;
+  }
+  
+  .github-signin-link {
+    padding: 6px;
+    min-width: 36px;
+  }
+  
+  .github-signin-link i {
+    margin-right: 0;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 900px) {
+  /* Hide star/fork dropdowns only when space is really tight */
   .stat-dropdown {
     display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-menu {
+    display: none;
+  }
+  
+  .mobile-menu-button {
+    display: block;
+    order: 2;
+    margin-left: auto;
+  }
+  
+  .github-stats-header {
+    order: 3;
   }
 }
 
@@ -1059,13 +1155,14 @@ html {
   
   .header-content {
     justify-content: space-between;
+    gap: 12px;
   }
   
   /* Enable mobile menu button */
   .mobile-menu-button {
     display: block;
+    order: 2;
     margin-left: auto;
-    margin-right: 20px; /* Space between menu button and contribute button */
   }
   
   .mobile-nav {
@@ -1074,7 +1171,8 @@ html {
   
   /* Position GitHub stats in mobile view */
   .github-stats-header {
-    position: relative;
+    order: 3;
+    gap: 8px;
   }
   
   .github-signin-link span {
@@ -1083,6 +1181,7 @@ html {
   
   .github-signin-link {
     padding: 8px;
+    min-width: 40px;
   }
   
   .github-signin-link i {

@@ -104,6 +104,34 @@
     <li class="mobile-nav-item">
       <a href="#how-it-works" class="mobile-nav-link" (click)="closeMobileMenu()">How it works</a>
     </li>
+    <li class="mobile-nav-item mobile-github-stats">
+      <div class="mobile-stats-container">
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('frontend', 'star'); closeMobileMenu()">
+          <i class="star-icon"></i>
+          <span>Star Frontend ({{ repoStats.frontend.stars }})</span>
+        </button>
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('backend', 'star'); closeMobileMenu()">
+          <i class="star-icon"></i>
+          <span>Star Backend ({{ repoStats.backend.stars }})</span>
+        </button>
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('frontend', 'fork'); closeMobileMenu()">
+          <i class="fork-icon"></i>
+          <span>Fork Frontend ({{ repoStats.frontend.forks }})</span>
+        </button>
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('backend', 'fork'); closeMobileMenu()">
+          <i class="fork-icon"></i>
+          <span>Fork Backend ({{ repoStats.backend.forks }})</span>
+        </button>
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('frontend', 'contribute'); closeMobileMenu()">
+          <i class="contribute-icon"></i>
+          <span>Contribute to Frontend</span>
+        </button>
+        <button type="button" class="mobile-stat-button" (click)="navigateToRepo('backend', 'contribute'); closeMobileMenu()">
+          <i class="contribute-icon"></i>
+          <span>Contribute to Backend</span>
+        </button>
+      </div>
+    </li>
   </ul>
 </nav>
 
