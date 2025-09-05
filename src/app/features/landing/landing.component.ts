@@ -1,11 +1,12 @@
 // src/app/features/landing/landing.component.ts
-import { Component, OnInit, PLATFORM_ID, Inject, ViewChild, ElementRef, AfterViewInit, HostListener } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, Inject, ViewChild, ElementRef, AfterViewInit, HostListener, OnDestroy } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { GithubService } from '../../core/services/github.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-landing',
@@ -14,7 +15,7 @@ import { forkJoin } from 'rxjs';
   standalone: true,
   imports: [CommonModule, RouterModule, ThemeToggleComponent] // Add ThemeToggleComponent to imports
 })
-export class LandingComponent implements OnInit, AfterViewInit {
+export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('logoImg') logoImg!: ElementRef;
   @ViewChild('demoImg') demoImg!: ElementRef;
   @ViewChild('footerLogoImg') footerLogoImg!: ElementRef;
@@ -100,10 +101,14 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
   // Just keep isBrowser for conditional rendering
   isBrowser: boolean;
+  // Auth state
+  isAuthenticated = false;
+  private authSub?: Subscription;
 
   constructor(
     private githubService: GithubService,
     private authService: AuthService,
+    private router: Router,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
@@ -113,6 +118,10 @@ export class LandingComponent implements OnInit, AfterViewInit {
     // Theme initialization is now handled by ThemeToggleComponent
     if (this.isBrowser) {
       this.loadGitHubStats();
+      // Watch auth state to toggle CTA without extra API calls
+      this.authSub = this.authService.isAuthenticated().subscribe(isAuthed => {
+        this.isAuthenticated = isAuthed;
+      });
     }
   }
 
@@ -123,6 +132,10 @@ export class LandingComponent implements OnInit, AfterViewInit {
         this.setupSmoothScrolling();
       }, 100);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.authSub?.unsubscribe();
   }
 
   setupSmoothScrolling(): void {
@@ -198,12 +211,16 @@ export class LandingComponent implements OnInit, AfterViewInit {
   }
 
   handleGitHubLogin(): void {
-    console.log('Login button clicked');
-    if (this.isBrowser) {
-      this.authService.login().subscribe();
-    } else {
+    if (!this.isBrowser) {
       console.warn('Cannot navigate: not in browser environment');
+      return;
     }
+    if (this.isAuthenticated) {
+      this.router.navigate(['dashboard']);
+      return;
+    }
+    // Not authenticated: start OAuth login flow
+    this.authService.login().subscribe();
   }
 
   // Mobile menu methods
@@ -275,11 +292,11 @@ export class LandingComponent implements OnInit, AfterViewInit {
   // Load GitHub repository statistics
   loadGitHubStats(): void {
     const frontendStats$ = this.githubService.getRepositoryStats(
-      this.repositories.frontend.owner, 
+      this.repositories.frontend.owner,
       this.repositories.frontend.repo
     );
     const backendStats$ = this.githubService.getRepositoryStats(
-      this.repositories.backend.owner, 
+      this.repositories.backend.owner,
       this.repositories.backend.repo
     );
 

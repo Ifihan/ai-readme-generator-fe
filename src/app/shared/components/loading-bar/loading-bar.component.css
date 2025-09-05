@@ -4,13 +4,15 @@
   left: 0;
   right: 0;
   z-index: 9999;
-  height: 3px;
+  height: 4px; /* slightly thicker for visibility */
+  pointer-events: none; /* avoid blocking clicks at the very top */
 }
 
 .loading-bar {
   height: 100%;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.08); /* subtle track */
   overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); /* cast a faint shadow below the bar */
 }
 
 .loading-bar-progress {
@@ -19,6 +21,12 @@
   background-size: 200% 100%;
   animation: loadingAnimation 2s ease-in-out infinite;
   width: 100%;
+  /* glow and depth */
+  box-shadow: 0 0 10px rgba(138, 43, 226, 0.55),
+    /* brand-ish purple glow */ 0 2px 8px rgba(0, 0, 0, 0.2);
+  filter: drop-shadow(
+    0 0 6px var(--primary)
+  ); /* extra glow using theme color */
 }
 
 @keyframes loadingAnimation {

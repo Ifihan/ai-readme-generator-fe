@@ -38,6 +38,9 @@ export class ReadmeGenerateComponent implements OnInit {
   showPreview = false;
   saving = false;
   downloading = false;
+  // Success view state
+  pushSuccess = false;
+  gifFailedToLoad = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -172,7 +175,10 @@ export class ReadmeGenerateComponent implements OnInit {
     this.readmeService.saveReadmeToGithub(payload).subscribe({
       next: (response) => {
         this.saving = false;
-        this.notificationService.success('README saved to GitHub successfully!');
+        this.pushSuccess = true;
+        this.error = null;
+        this.playSuccessSound();
+        this.notificationService.success('README pushed to GitHub successfully!');
       },
       error: (err) => {
         this.error = 'Failed to save README to GitHub.';
@@ -180,6 +186,84 @@ export class ReadmeGenerateComponent implements OnInit {
         this.saving = false;
       }
     });
+  }
+
+  goToDashboard() {
+    this.router.navigate(['dashboard']);
+  }
+
+  onGifError() {
+    this.gifFailedToLoad = true;
+  }
+
+  // Play a short celebratory ta‑da without external assets
+  private playSuccessSound() {
+    if (typeof window === 'undefined') return;
+    const AudioCtx = (window as any).AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    try {
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      const master = ctx.createGain();
+      master.gain.setValueAtTime(0.08, now);
+      master.connect(ctx.destination);
+
+      // Major triad (C major as base) with quick arpeggio and shimmer
+      const base = 523.25; // C5
+      const triad = [base, base * 1.25, base * 1.5]; // C E G
+      triad.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const start = now + i * 0.06;
+        const end = start + 0.5;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, start);
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.9 - i * 0.2, start + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.001, end);
+        osc.connect(gain);
+        gain.connect(master);
+        osc.start(start);
+        osc.stop(end + 0.02);
+      });
+
+      // Add a quick upper shimmer
+      const shimmer = ctx.createOscillator();
+      const shimmerGain = ctx.createGain();
+      shimmer.type = 'triangle';
+      shimmer.frequency.setValueAtTime(base * 2, now + 0.12); // C6
+      shimmerGain.gain.setValueAtTime(0, now + 0.12);
+      shimmerGain.gain.linearRampToValueAtTime(0.5, now + 0.16);
+      shimmerGain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+      shimmer.connect(shimmerGain);
+      shimmerGain.connect(master);
+      shimmer.start(now + 0.12);
+      shimmer.stop(now + 0.44);
+
+      // Gentle end whoosh (noise approximation with detuned oscillators)
+      const whooshStart = now + 0.2;
+      for (let i = 0; i < 3; i++) {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(40 + i * 8, whooshStart);
+        o.detune.setValueAtTime((i - 1) * 20, whooshStart);
+        g.gain.setValueAtTime(0.0001, whooshStart);
+        g.gain.exponentialRampToValueAtTime(0.02, whooshStart + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.0001, whooshStart + 0.35);
+        o.connect(g);
+        g.connect(master);
+        o.start(whooshStart);
+        o.stop(whooshStart + 0.4);
+      }
+
+      // Auto close
+      setTimeout(() => {
+        try { ctx.close(); } catch { }
+      }, 700);
+    } catch {
+      // ignore audio errors
+    }
   }
 
   backToForm() {

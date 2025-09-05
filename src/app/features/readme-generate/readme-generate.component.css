@@ -3,6 +3,29 @@
   margin: 0 auto;
 }
 
+/* Celebration background on success */
+.readme-generate-wrapper.success-bg {
+  position: relative;
+}
+.readme-generate-wrapper.success-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: url("/assets/images/celebration.gif") center/cover no-repeat;
+  opacity: 0.25; /* subtle so content remains readable */
+  pointer-events: none;
+  z-index: 0;
+}
+.success-section,
+.preview-section,
+form,
+.repo-info,
+.preview-content,
+.preview-actions {
+  position: relative;
+  z-index: 1; /* keep content above the background */
+}
+
 h2 {
   font-size: 24px;
   font-weight: 600;
@@ -371,6 +394,29 @@ h2 {
   justify-content: center;
   min-height: 200px;
   color: var(--text-secondary);
+  gap: 12px; /* space between spinner and text */
+}
+
+/* Simple spinner animation for inline SVGs in this component */
+.animate-spin {
+  display: inline-block;
+  transform-origin: center;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin {
+    animation: none;
+  }
 }
 
 .error {
@@ -382,6 +428,50 @@ h2 {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+/* Success View */
+.success-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.success-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 32px 24px;
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  animation: fadeIn 0.3s ease-in;
+}
+
+.celebration-media {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.celebration-media img {
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+.celebration-fallback {
+  font-size: 64px;
+}
+
+.success-card h2 {
+  margin: 8px 0 6px;
+  color: var(--text-primary);
+}
+.success-card p {
+  margin: 0 0 16px;
+  color: var(--text-secondary);
 }
 
 form {
