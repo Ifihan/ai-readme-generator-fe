@@ -38,6 +38,8 @@ export class ReadmeGenerateComponent implements OnInit {
   showPreview = false;
   saving = false;
   downloading = false;
+  // Loading states
+  isGenerating = false;
   // Success view state
   pushSuccess = false;
   gifFailedToLoad = false;
@@ -55,7 +57,8 @@ export class ReadmeGenerateComponent implements OnInit {
   }
 
   fetchSectionTemplates() {
-    this.loading = true;
+  this.loading = true;
+  this.isGenerating = false;
     this.readmeService.getSectionTemplates().subscribe({
       next: (sections) => {
         this.sectionTemplates = sections;
@@ -63,11 +66,11 @@ export class ReadmeGenerateComponent implements OnInit {
         // Auto-select sections that have is_default: true
         this.selectedSections = sections.filter(section => section.is_default === true);
 
-        this.loading = false;
+  this.loading = false;
       },
       error: (err) => {
         this.error = 'Failed to load section templates.';
-        this.loading = false;
+  this.loading = false;
       }
     });
   }
@@ -88,7 +91,8 @@ export class ReadmeGenerateComponent implements OnInit {
   generateReadme() {
     if (!this.repoUrl || this.selectedSections.length === 0) return;
 
-    this.loading = true;
+  this.loading = true;
+  this.isGenerating = true;
     this.error = null;
 
     const sections: ReadmeSection[] = this.selectedSections.map((s, i) => ({
@@ -111,12 +115,14 @@ export class ReadmeGenerateComponent implements OnInit {
         this.generatedReadme = res.content;
         this.editableReadme = res.content; // Initialize editable copy
         this.sectionsIncluded = res.sections_included;
-        this.showPreview = true;
-        this.loading = false;
+  this.showPreview = true;
+  this.loading = false;
+  this.isGenerating = false;
       },
       error: (err) => {
         this.error = 'Failed to generate README.';
-        this.loading = false;
+  this.loading = false;
+  this.isGenerating = false;
       }
     });
   }
