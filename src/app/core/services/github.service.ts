@@ -108,7 +108,12 @@ export class GithubService {
    */
   logout(): void {
     if (this.isBrowser) {
-      window.location.href = `${this.API_URL}/auth/logout`;
+      // Clear any stored tokens or user info
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_session');
+      localStorage.removeItem('auth_redirect');
+      // Redirect to landing page
+      this.router.navigateByUrl('/', { replaceUrl: true });
     }
   }
 

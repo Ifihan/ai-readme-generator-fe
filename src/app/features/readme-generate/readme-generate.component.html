@@ -17,8 +17,8 @@
           <path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93"
             stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
-        <span *ngIf="!showPreview">Loading section templates...</span>
-        <span *ngIf="showPreview">Generating README...</span>
+        <span *ngIf="isGenerating">Generating README...</span>
+        <span *ngIf="!isGenerating">Loading section templates...</span>
       </div>
 
       <div *ngIf="error" class="error">
