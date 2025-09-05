@@ -1,7 +1,7 @@
 export const environment = {
-  production: false,
-  githubClientId: '',
-  githubClientAppId: '',
+  production: true,
+  githubClientId: 'Ov23liUXmA6O4big0CwG',
+  githubClientAppId: '1201940',
   useMockData: false,
-  apiUrl: 'http://localhost:8000'
+  apiUrl: 'https://ai-readme-generator-be-912048666815.us-central1.run.app/api/v1'
 };

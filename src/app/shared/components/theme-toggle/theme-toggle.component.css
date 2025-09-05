@@ -5,8 +5,11 @@
   padding: 3px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   width: fit-content;
-  position: absolute;
-  z-index: 10000;
+  position: fixed; /* always fixed to viewport */
+  bottom: max(20px, env(safe-area-inset-bottom));
+  right: max(20px, env(safe-area-inset-right));
+  z-index: 2147483647 !important; /* sit above everything */
+  pointer-events: auto;
 }
 
 .toggle-btn {
@@ -46,20 +49,7 @@
   display: block;
 }
 
-:host.fixed .theme-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 10000;
-}
-
 @media (max-width: 768px) {
-  :host.fixed .theme-toggle {
-    bottom: 20px;
-    right: 20px;
-    z-index: 10000;
-  }
-
   .toggle-btn {
     width: 32px;
     height: 32px;
@@ -67,12 +57,6 @@
 }
 
 @media (max-width: 480px) {
-  :host.fixed .theme-toggle {
-    bottom: 20px;
-    right: 20px;
-    z-index: 10000;
-  }
-
   .toggle-btn {
     width: 30px;
     height: 30px;

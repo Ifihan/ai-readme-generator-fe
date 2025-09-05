@@ -1,5 +1,5 @@
 <app-page-layout [showBackButton]="true">
-  <div class="readme-generate-wrapper">
+  <div class="readme-generate-wrapper" [class.success-bg]="pushSuccess">
 
     <!-- Form Section (hidden when preview is shown) -->
     <div *ngIf="!showPreview">
@@ -64,8 +64,20 @@
       </form>
     </div>
 
+    <!-- Success Section -->
+  <div *ngIf="pushSuccess" class="success-section">
+      <div class="success-card">
+    <!-- Background celebration is applied to wrapper; keep header concise -->
+        <h2>README pushed successfully!</h2>
+        <p>Your README has been pushed to your repository on the main branch.</p>
+        <button type="button" class="btn-primary" (click)="goToDashboard()">
+          Go to Dashboard
+        </button>
+      </div>
+    </div>
+
     <!-- Preview Section -->
-    <div *ngIf="showPreview" class="preview-section">
+    <div *ngIf="showPreview && !pushSuccess" class="preview-section">
       <div class="preview-header">
         <h2>Generated README Preview</h2>
         <button type="button" class="back-button" (click)="backToForm()">
@@ -105,9 +117,9 @@
         </app-markdown-editor>
       </div>
 
-      <div class="preview-actions">
+  <div class="preview-actions">
         <button type="button" class="btn-primary" (click)="downloadReadme()" [disabled]="downloading">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" [class.animate-spin]="downloading">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -117,16 +129,16 @@
         </button>
 
         <button type="button" class="btn-github" (click)="saveToGitHub()" [disabled]="saving">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" [class.animate-spin]="saving">
             <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span *ngIf="!saving">Save to GitHub</span>
-          <span *ngIf="saving">Saving...</span>
+          <span *ngIf="!saving">Push to GitHub</span>
+          <span *ngIf="saving">Pushing...</span>
         </button>
       </div>
 
-      <div *ngIf="error" class="error">
+  <div *ngIf="error" class="error">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
           <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"

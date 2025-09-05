@@ -7,14 +7,14 @@
             <rect width="32" height="32" rx="6" fill="#8a2be2"/>
             <text x="16" y="20" fill="white" text-anchor="middle" font-size="18" font-weight="bold">R</text>
           </svg>
-          <img #logoImg src="assets/images/logo.svg" alt="Readme AI Logo" class="logo-image" 
-               (error)="handleImageError($event)" 
+          <img #logoImg src="assets/images/logo.svg" alt="Readme AI Logo" class="logo-image"
+               (error)="handleImageError($event)"
                (load)="imageLoaded = true"
                [style.display]="imageLoaded ? 'block' : 'none'">
           <span class="logo-text">Readme AI</span>
         </a>
       </div>
-      
+
       <!-- Desktop Navigation -->
       <nav class="nav-menu">
         <ul class="nav-list">
@@ -22,7 +22,7 @@
           <li class="nav-item"><a href="#how-it-works" class="nav-link">How it works</a></li>
         </ul>
       </nav>
-      
+
       <!-- Mobile Menu Button -->
       <button class="mobile-menu-button" (click)="toggleMobileMenu()" aria-label="Toggle menu">
         <div class="mobile-menu-icon" [class.open]="mobileMenuOpen">
@@ -31,7 +31,7 @@
           <span></span>
         </div>
       </button>
-      
+
       <!-- GitHub Stats in Header -->
       <div class="github-stats-header">
         <!-- Stars Dropdown -->
@@ -85,10 +85,10 @@
           </div>
         </div>
 
-        <!-- GitHub Sign In Button -->
-        <button type="button" class="github-signin-link" (click)="handleGitHubLogin()" title="Sign in with GitHub">
+        <!-- GitHub Sign In / Go to App Button -->
+        <button type="button" class="github-signin-link" (click)="handleGitHubLogin()" [title]="isAuthenticated ? 'Go to Dashboard' : 'Sign in with GitHub'">
           <i class="github-icon"></i>
-          <span>Sign in with GitHub</span>
+          <span>{{ isAuthenticated ? 'Go to Dashboard' : 'Sign in with GitHub' }}</span>
         </button>
       </div>
     </div>
@@ -145,7 +145,8 @@
       </p>
       <div class="cta-button animate-slide-up-delayed">
         <button type="button" class="btn btn-primary animate-pulse" (click)="handleGitHubLogin()">
-          <i class="github-icon"></i> Sign in with GitHub
+          <i class="github-icon"></i>
+          <span>{{ isAuthenticated ? 'Go to Dashboard' : 'Sign in with GitHub' }}</span>
         </button>
       </div>
     </div>
@@ -158,8 +159,8 @@
       <div *ngIf="!demoImageLoaded" class="demo-image-placeholder">
         <div class="demo-placeholder-text">Product Demo</div>
       </div>
-      <img #demoImg src="assets/images/one.png" alt="ReadmeAI Product Demo" class="demo-image" 
-           (error)="handleDemoImageError($event)" 
+      <img #demoImg src="assets/images/one.png" alt="ReadmeAI Product Demo" class="demo-image"
+           (error)="handleDemoImageError($event)"
            (load)="demoImageLoaded = true"
            [style.display]="demoImageLoaded ? 'block' : 'none'">
       <p class="demo-caption">Product Demo Screenshot</p>
@@ -169,7 +170,7 @@
   <!-- Features Section -->
   <section id="features" class="features">
     <h2 class="section-title animate-slide-up">Features</h2>
-    
+
     <div class="features-list-container">
       <ul class="features-list">
         @for (feature of features; track feature.title; let i = $index) {
@@ -210,7 +211,7 @@
   <app-theme-toggle class="fixed animate-fade-in"></app-theme-toggle>
 }
 
-<footer class="footer animate-slide-up">
+<footer class="footer">
   <div class="container">
     <div class="footer-content">
       <div class="footer-logo">
@@ -218,13 +219,13 @@
           <rect width="32" height="32" rx="6" fill="#8a2be2"/>
           <text x="16" y="20" fill="white" text-anchor="middle" font-size="18" font-weight="bold">R</text>
         </svg>
-        <img #footerLogoImg src="assets/images/logo.svg" alt="ReadmeAI Logo" class="footer-logo-image" 
-             (error)="handleFooterImageError($event)" 
+        <img #footerLogoImg src="assets/images/logo.svg" alt="ReadmeAI Logo" class="footer-logo-image"
+             (error)="handleFooterImageError($event)"
              (load)="footerImageLoaded = true"
              [style.display]="footerImageLoaded ? 'block' : 'none'">
         <span class="footer-logo-text">Readme AI</span>
       </div>
-      
+
       <div class="footer-links">
         <div class="footer-links-column">
           <h3 class="footer-heading">Product</h3>
@@ -233,14 +234,14 @@
             <li><a href="#how-it-works">How it works</a></li>
           </ul>
         </div>
-        
+
         <div class="footer-links-column">
           <h3 class="footer-heading">Resources</h3>
           <ul class="footer-list">
             <li><a href="https://ai-readme-generator-be-912048666815.us-central1.run.app/" target="_blank">API</a></li>
           </ul>
         </div>
-        
+
         <div class="footer-links-column">
           <h3 class="footer-heading">About</h3>
           <ul class="footer-list">
@@ -250,7 +251,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="social-links-container">
       <div class="social-links">
         <a href="https://x.com/ifihan_" class="social-link" target="_blank"><i class="twitter-icon"></i></a>
@@ -258,7 +259,7 @@
         <a href="https://linkedin.com/in/ifihan-olusheye" class="social-link" target="_blank"><i class="linkedin-icon"></i></a>
       </div>
     </div>
-    
+
     <div class="footer-bottom">
       <p class="copyright">© {{ currentYear }} Readme AI. All rights reserved.</p>
     </div>
