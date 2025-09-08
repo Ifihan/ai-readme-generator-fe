@@ -5,6 +5,7 @@ import { catchError, tap, map } from 'rxjs/operators';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { environment } from '../../../environments/environment';
+import { STORAGE_KEYS } from '../constants/app.constants';
 
 export interface Repository {
   id: number;
@@ -109,9 +110,9 @@ export class GithubService {
   logout(): void {
     if (this.isBrowser) {
       // Clear any stored tokens or user info
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user_session');
-      localStorage.removeItem('auth_redirect');
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_SESSION);
+      localStorage.removeItem(STORAGE_KEYS.USER_SESSION);
       // Redirect to landing page
       this.router.navigateByUrl('/', { replaceUrl: true });
     }

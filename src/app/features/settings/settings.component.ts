@@ -17,7 +17,8 @@ export class SettingsComponent implements OnInit {
   message: string = '';
   loading: boolean = false;
   error: string = '';
-  processing: boolean = false;
+  processingRevoke: boolean = false;
+  processingReinstall: boolean = false;
   showRevokeConfirm: boolean = false;
 
   constructor(
@@ -40,7 +41,7 @@ export class SettingsComponent implements OnInit {
   }
 
   onReinstall(): void {
-    this.processing = true;
+    this.processingReinstall = true;
     this.message = '';
     this.error = '';
 
@@ -58,11 +59,11 @@ export class SettingsComponent implements OnInit {
           this.message = 'GitHub App reinstall initiated successfully';
         }
 
-        this.processing = false;
+        this.processingReinstall = false;
       },
       error: (err) => {
         this.error = 'Error initiating GitHub App reinstall';
-        this.processing = false;
+        this.processingReinstall = false;
       }
     });
   }
@@ -78,20 +79,21 @@ export class SettingsComponent implements OnInit {
   }
 
   proceedRevoke(): void {
-    this.processing = true;
+    this.processingRevoke = true;
     this.authService.revokeGitHubApp().subscribe({
       next: () => {
         this.message = 'GitHub App revoked successfully';
-        this.processing = false;
+        this.processingRevoke = false;
         this.showRevokeConfirm = false;
         // Clear session via AuthService for consistency
         this.authService.clearAuth();
-        localStorage.removeItem('user_session');
+        localStorage.removeItem(STORAGE_KEYS.USER_SESSION);
+        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         this.userSession = null;
       },
       error: () => {
         this.error = 'Error revoking GitHub App';
-        this.processing = false;
+        this.processingRevoke = false;
         this.showRevokeConfirm = false;
       }
     });
@@ -99,6 +101,5 @@ export class SettingsComponent implements OnInit {
 
   onLogout(): void {
     this.authService.clearAuth();
-    localStorage.removeItem('user_session');
   }
 }
