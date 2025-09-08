@@ -129,6 +129,7 @@ export class AuthService {
     if (this.isBrowser) {
       localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.CURRENT_SESSION);
+      localStorage.removeItem(STORAGE_KEYS.USER_SESSION);
     }
     this.notificationService.info('You have been logged out.');
     window.location.href = ROUTES.LANDING;
