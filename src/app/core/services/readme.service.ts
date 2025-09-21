@@ -197,7 +197,7 @@ export class ReadmeService {
       .set('page', page.toString())
       .set('page_size', pageSize.toString());
 
-    return this.http.get<HistoryResponse>(`${this.API_URL}/api/v1/readme/history`, { params }).pipe(
+    return this.http.get<HistoryResponse>(`${this.API_URL}/readme/history`, { params }).pipe(
       tap(response => this.logger.info('README history fetched:', response.entries?.length || 0, 'entries')),
       catchError(error => {
         this.logger.error('Error fetching README history:', error);
