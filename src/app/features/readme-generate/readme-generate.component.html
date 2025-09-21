@@ -118,6 +118,11 @@
       </div>
 
   <div class="preview-actions">
+        <div *ngIf="showCommitMessageInput" class="commit-message-field">
+          <label for="commitMessage">Commit Message</label>
+          <input id="commitMessage" type="text" [(ngModel)]="commitMessage" name="commitMessage" maxlength="120" placeholder="e.g. docs: add generated README" />
+          <small class="hint">Keep it concise (≤ 72 chars recommended). You can edit before pushing.</small>
+        </div>
         <button type="button" class="btn-primary" (click)="downloadReadme()" [disabled]="downloading">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" [class.animate-spin]="downloading">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -128,12 +133,13 @@
           <span *ngIf="downloading">Downloading...</span>
         </button>
 
-        <button type="button" class="btn-github" (click)="saveToGitHub()" [disabled]="saving">
+        <button type="button" class="btn-github" (click)="saveToGitHub()" [disabled]="saving || (showCommitMessageInput && !commitMessage.trim())">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" [class.animate-spin]="saving">
             <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span *ngIf="!saving">Push to GitHub</span>
+          <span *ngIf="!saving && !showCommitMessageInput">Push to GitHub</span>
+          <span *ngIf="!saving && showCommitMessageInput">Confirm Push</span>
           <span *ngIf="saving">Pushing...</span>
         </button>
       </div>

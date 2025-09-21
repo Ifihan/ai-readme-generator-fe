@@ -43,6 +43,9 @@ export class ReadmeGenerateComponent implements OnInit {
   // Success view state
   pushSuccess = false;
   gifFailedToLoad = false;
+  // Commit message input state
+  showCommitMessageInput = false;
+  commitMessage = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -168,13 +171,27 @@ export class ReadmeGenerateComponent implements OnInit {
   saveToGitHub() {
     if (!this.editableReadme) return;
 
+    // First click reveals commit message input
+    if (!this.showCommitMessageInput) {
+      this.showCommitMessageInput = true;
+      // Provide a sensible default suggestion
+      this.commitMessage = this.commitMessage || 'docs: add generated README';
+      return;
+    }
+
+    const trimmed = (this.commitMessage || '').trim();
+    if (!trimmed) {
+      this.notificationService.error('Please enter a commit message.');
+      return;
+    }
+
     this.saving = true;
     const cleanContent = this.cleanMarkdownContent(this.editableReadme);
     const payload = {
       repository_url: this.repoUrl,
       content: cleanContent,
       path: 'README.md',
-      commit_message: 'Add generated README.md',
+      commit_message: trimmed,
       branch: 'main'
     };
 
