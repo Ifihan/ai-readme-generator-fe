@@ -7,6 +7,7 @@ import { API_ENDPOINTS, ERROR_MESSAGES } from '../constants/app.constants';
 import { NotificationService } from './notification.service';
 import { LoggerService } from './logger.service';
 import { SectionTemplate, GenerateReadmeRequest, GenerateReadmeResponse, RefineReadmeRequest, RefineReadmeResponse, SaveReadmeRequest, SaveReadmeResponse, DownloadReadmeRequest, DownloadReadmeResponse, PreviewReadmeResponse, AnalyzeRepositoryResponse, ReadmeSection } from '../models/readme.model';
+import { HistoryResponse } from '../models/history.model';
 // Section Template Interfaces
 
 @Injectable({ providedIn: 'root' })
@@ -183,6 +184,27 @@ export class ReadmeService {
       required,
       order
     };
+  }
+
+  /**
+   * Get README generation history with pagination
+   * GET /api/v1/readme/history
+   */
+  getReadmeHistory(page: number = 1, pageSize: number = 10): Observable<HistoryResponse> {
+    this.logger.info('Fetching README generation history', { page, pageSize });
+
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('page_size', pageSize.toString());
+
+    return this.http.get<HistoryResponse>(`${this.API_URL}/api/v1/readme/history`, { params }).pipe(
+      tap(response => this.logger.info('README history fetched:', response.entries?.length || 0, 'entries')),
+      catchError(error => {
+        this.logger.error('Error fetching README history:', error);
+        this.notificationService.error('Failed to load README generation history');
+        return throwError(() => error);
+      })
+    );
   }
 
   /**

@@ -21,6 +21,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/readme-generate/readme-generate.component').then(m => m.ReadmeGenerateComponent)
   },
   {
+    path: 'history',
+    loadComponent: () => import('./features/history/history.component').then(m => m.HistoryComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'settings',
     loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),
     canActivate: [AuthGuard]

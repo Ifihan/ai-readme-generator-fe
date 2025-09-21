@@ -1,0 +1,90 @@
+<app-page-layout [showBackButton]="true">
+  <div class="history-container">
+    <div class="history-header">
+      <h2>README Generation History</h2>
+      <p class="history-description">View your past README generations and access their repositories.</p>
+    </div>
+
+    <div *ngIf="loading" class="loading-message">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-spin">
+        <path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>Loading history...</span>
+    </div>
+
+    <div *ngIf="error" class="error">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+          stroke="currentColor" stroke-width="2"/>
+      </svg>
+      {{ error }}
+    </div>
+
+    <div *ngIf="!loading && !error" class="history-content">
+      <div *ngIf="entries.length === 0" class="empty-state">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <h3>No README History</h3>
+        <p>You haven't generated any READMEs yet. Start by going to the dashboard and generating your first README!</p>
+        <a routerLink="/dashboard" class="btn-primary">Go to Dashboard</a>
+      </div>
+
+      <div *ngIf="entries.length > 0" class="history-list">
+        <div *ngFor="let entry of entries" class="history-item">
+          <div class="history-item-header">
+            <div class="repo-info">
+              <h3 class="repo-name" (click)="openRepository(entry.repository_url)" title="Open repository">
+                {{ entry.repository_name }}
+              </h3>
+              <span class="repo-url">{{ entry.repository_url }}</span>
+            </div>
+            <div class="generation-info">
+              <span class="generation-date">{{ formatDate(entry.created_at) }}</span>
+              <span class="file-size">{{ formatFileSize(entry.file_size) }}</span>
+            </div>
+          </div>
+
+          <div class="history-item-details">
+            <div class="sections-generated">
+              <h4>Sections Generated:</h4>
+              <div class="section-tags">
+                <span *ngFor="let section of entry.sections_generated" class="section-tag">
+                  {{ section }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="totalPages > 1" class="pagination">
+        <button
+          class="pagination-btn"
+          [disabled]="currentPage === 1"
+          (click)="previousPage()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <span class="page-info">
+          Page {{ currentPage }} of {{ totalPages }} ({{ totalCount }} total)
+        </span>
+
+        <button
+          class="pagination-btn"
+          [disabled]="currentPage === totalPages"
+          (click)="nextPage()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</app-page-layout>
