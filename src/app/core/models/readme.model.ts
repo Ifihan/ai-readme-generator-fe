@@ -23,7 +23,7 @@ export interface GenerateReadmeRequest {
 
 export interface GenerateReadmeResponse {
   content: string;
-  sections_included: string[];
+  sections_generated: string[];
 }
 
 // README Refinement Interfaces

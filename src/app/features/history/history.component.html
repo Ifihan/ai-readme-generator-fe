@@ -34,29 +34,96 @@
       </div>
 
       <div *ngIf="entries.length > 0" class="history-list">
-        <div *ngFor="let entry of entries" class="history-item">
-          <div class="history-item-header">
+        <div *ngFor="let entry of entries" class="history-card">
+          <div class="card-header">
             <div class="repo-info">
-              <h3 class="repo-name" (click)="openRepository(entry.repository_url)" title="Open repository">
-                {{ entry.repository_name }}
-              </h3>
-              <span class="repo-url">{{ entry.repository_url }}</span>
+              <div class="repo-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="repo-icon">
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <h3 class="repo-name" (click)="openRepository(entry.repository_url)" title="Open repository">
+                  {{ entry.repository_name }}
+                </h3>
+              </div>
+              <a [href]="'https://github.com/' + entry.repository_url" target="_blank" rel="noopener noreferrer" class="repo-link">
+                {{ entry.repository_url }}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </a>
             </div>
-            <div class="generation-info">
-              <span class="generation-date">{{ formatDate(entry.created_at) }}</span>
-              <span class="file-size">{{ formatFileSize(entry.file_size) }}</span>
+            
+            <div class="type-badge" [class.badge-new]="entry.generation_type === 'new'" [class.badge-update]="entry.generation_type === 'update'">
+              {{ entry.generation_type === 'new' ? 'New' : 'Update' }}
             </div>
           </div>
 
-          <div class="history-item-details">
-            <div class="sections-generated">
-              <h4>Sections Generated:</h4>
+          <div class="card-body">
+            <div class="user-info">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>{{ entry.username }}</span>
+            </div>
+
+            <div class="sections-wrapper">
+              <div class="sections-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="sections-label">{{ entry.sections_generated.length }} Section{{ entry.sections_generated.length !== 1 ? 's' : '' }}</span>
+              </div>
               <div class="section-tags">
-                <span *ngFor="let section of entry.sections_generated" class="section-tag">
-                  {{ section }}
-                </span>
+                <span *ngFor="let section of entry.sections_generated" class="section-tag">{{ section }}</span>
               </div>
             </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="meta-items">
+              <div class="meta-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>{{ formatDate(entry.created_at) }}</span>
+              </div>
+              <div class="meta-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-7-7z"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M13 2v7h7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>{{ formatFileSize(entry.file_size) }}</span>
+              </div>
+            </div>
+            
+            <button class="view-content-btn" (click)="toggleContent(entry)" type="button">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              {{ entry.showContent ? 'Hide' : 'View' }} Content
+            </button>
+          </div>
+          
+          <div class="content-preview" *ngIf="entry.showContent">
+            <div class="content-header">
+              <h4>README Content</h4>
+              <button class="copy-btn" (click)="copyContent(entry.content)" type="button" title="Copy to clipboard">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Copy
+              </button>
+            </div>
+            <pre class="content-text">{{ cleanMarkdownContent(entry.content) }}</pre>
           </div>
         </div>
       </div>

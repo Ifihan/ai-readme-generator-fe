@@ -48,7 +48,7 @@ export class ReadmeService {
       `${this.API_URL}${API_ENDPOINTS.README.GENERATE}`,
       request
     ).pipe(
-      tap(response => this.logger.info('README generated successfully, sections included:', response.sections_included)),
+      tap(response => this.logger.info('README generated successfully, sections included:', response.sections_generated)),
       catchError(error => {
         this.logger.error('Error generating README:', error);
         this.notificationService.error(ERROR_MESSAGES.README.GENERATION_FAILED);
