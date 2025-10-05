@@ -78,7 +78,7 @@ export class GithubService {
 
     // If this is a return from GitHub app installation
     if (installationId && setupAction === 'install') {
-      console.log('Detected return from GitHub app installation');
+      // console.log('Detected return from GitHub app installation');
 
       // Clear URL parameters but keep the path
       const cleanUrl = window.location.pathname;
@@ -164,7 +164,7 @@ export class GithubService {
     return this.http.get<RepositoriesResponse>(`${this.API_URL}/auth/repositories`)
       .pipe(
         tap(response => {
-          console.log(`Received ${response.total_count} repositories`, response.repositories);
+          // console.log(`Received ${response.total_count} repositories`, response.repositories);
         }),
         catchError(error => {
           console.error('Error fetching GitHub app installations:', error);
@@ -183,7 +183,7 @@ export class GithubService {
     ).pipe(
       map(response => response.repositories || []),
       tap(repos => {
-        console.log(`Received ${repos.length} repositories for installation ${installationId}`);
+        // console.log(`Received ${repos.length} repositories for installation ${installationId}`);
       }),
       catchError(error => {
         console.error(`Error fetching repositories for installation ${installationId}:`, error);

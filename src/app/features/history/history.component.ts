@@ -98,4 +98,25 @@ export class HistoryComponent implements OnInit {
   openRepository(url: string): void {
     window.open(url, '_blank');
   }
+
+  toggleContent(entry: HistoryEntry): void {
+    entry.showContent = !entry.showContent;
+  }
+
+  copyContent(content: string): void {
+    const cleanContent = this.cleanMarkdownContent(content);
+    navigator.clipboard.writeText(cleanContent).then(() => {
+      this.notificationService.success('Content copied to clipboard!');
+    }).catch(() => {
+      this.notificationService.error('Failed to copy content.');
+    });
+  }
+
+  cleanMarkdownContent(content: string): string {
+    // Remove the opening ```markdown and closing ``` from the content
+    return content
+      .replace(/^```markdown\n/, '')
+      .replace(/\n```$/, '')
+      .trim();
+  }
 }

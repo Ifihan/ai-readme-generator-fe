@@ -112,12 +112,16 @@ export class ReadmeGenerateComponent implements OnInit {
       badge_style: this.badgeStyle
     };
 
+    // console.log('Generate README payload:', payload);
+
     this.readmeService.generateReadme(payload).subscribe({
       next: (res) => {
+        // console.log('Generated README response:', res);
         res.content = this.cleanMarkdownContent(res.content);
         this.generatedReadme = res.content;
         this.editableReadme = res.content; // Initialize editable copy
-        this.sectionsIncluded = res.sections_included;
+        // Defensive: API may omit sections_generated; ensure it's always an array
+        this.sectionsIncluded = Array.isArray(res.sections_generated) ? res.sections_generated : [];
         this.showPreview = true;
         this.loading = false;
         this.isGenerating = false;

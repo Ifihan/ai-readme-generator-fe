@@ -3,10 +3,12 @@ export interface HistoryEntry {
   repository_name: string;
   repository_url: string;
   username: string;
+  content: string;
   created_at: string;
   file_size: number;
   generation_type: string;
   sections_generated: string[];
+  showContent?: boolean; // UI state property
 }
 
 export interface HistoryResponse {

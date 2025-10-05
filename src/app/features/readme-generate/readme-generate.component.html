@@ -30,7 +30,7 @@
         {{ error }}
       </div>
 
-      <form *ngIf="!loading && sectionTemplates.length" (ngSubmit)="generateReadme()">
+  <form *ngIf="!loading && (sectionTemplates?.length || 0)" (ngSubmit)="generateReadme()">
         <div class="sections-container">
           <h3>Select Sections</h3>
           <div class="sections-list">
@@ -97,7 +97,7 @@
           <span>{{ repoUrl }}</span>
         </p>
 
-        <div class="sections-included" *ngIf="sectionsIncluded.length">
+  <div class="sections-included" *ngIf="sectionsIncluded?.length">
           <h4>Sections Included:</h4>
           <div class="section-tags">
             <span *ngFor="let section of sectionsIncluded" class="section-tag">{{ section }}</span>
