@@ -6,7 +6,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PageLayoutComponent } from '../../shared/components/page-layout/page-layout.component';
 import { MarkdownEditorComponent } from '../../shared/components/markdown-editor/markdown-editor/markdown-editor.component';
-import { SectionTemplate, ReadmeSection, GenerateReadmeRequest } from '../../core/models/readme.model';
+import { SectionTemplate, ReadmeSection, GenerateReadmeRequest, GithubBranchModel } from '../../core/models/readme.model';
 
 @Component({
   selector: 'app-readme-generate',
@@ -46,6 +46,8 @@ export class ReadmeGenerateComponent implements OnInit {
   // Commit message input state
   showCommitMessageInput = false;
   commitMessage = '';
+  branches: GithubBranchModel[] = []
+  selectedBranch: GithubBranchModel | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -172,6 +174,13 @@ export class ReadmeGenerateComponent implements OnInit {
     this.notificationService.success('README downloaded successfully!');
   }
 
+  fetchBranches(){
+    const repoData = this.readmeService.extractMetadataFromGithubUrl(this.repoUrl);
+    if(!repoData) return null;
+    const { owner, repo } = repoData;
+    return this.readmeService.getRepositoryBranches(owner, repo)
+  }
+
   saveToGitHub() {
     if (!this.editableReadme) return;
 
@@ -179,6 +188,17 @@ export class ReadmeGenerateComponent implements OnInit {
     if (!this.showCommitMessageInput) {
       this.showCommitMessageInput = true;
       // Provide a sensible default suggestion
+      this.loading = true;
+      this.fetchBranches()?.subscribe({
+        next: (data) => {
+          this.branches = data.branches;
+          this.loading = false;
+        },
+        error: (error) => {
+          this.notificationService.error("Failed to retrieve branches");
+          this.loading = false;
+        }
+      });
       this.commitMessage = this.commitMessage || 'docs: add generated README';
       return;
     }
@@ -196,7 +216,7 @@ export class ReadmeGenerateComponent implements OnInit {
       content: cleanContent,
       path: 'README.md',
       commit_message: trimmed,
-      branch: 'main'
+      branch: this.selectedBranch?.name || 'main'
     };
 
     this.readmeService.saveReadmeToGithub(payload).subscribe({

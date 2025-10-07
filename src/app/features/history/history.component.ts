@@ -96,7 +96,12 @@ export class HistoryComponent implements OnInit {
   }
 
   openRepository(url: string): void {
-    window.open(url, '_blank');
+    const fullGithubUrlRegex = /^https?:\/\/(www\.)?github\.com\/[\w.-]+\/[\w.-]+(\/)?$/i;
+    const relativeGithubRepoRegex = /^[\w.-]+\/[\w.-]+$/;
+
+    if(fullGithubUrlRegex.test(url)) window.open(url, '_blank');
+    if(relativeGithubRepoRegex.test(url)) 
+      window.open(`https://github.com/${url}`, '_blank');
   }
 
   toggleContent(entry: HistoryEntry): void {
@@ -118,5 +123,21 @@ export class HistoryComponent implements OnInit {
       .replace(/^```markdown\n/, '')
       .replace(/\n```$/, '')
       .trim();
+  }
+
+  downloadContent(content: string, repo_name: string){
+    const cleanContent = this.cleanMarkdownContent(content);
+    const blob = new Blob([cleanContent], { type: 'text/markdown' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `README (${repo_name}).md`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   }
 }

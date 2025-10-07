@@ -82,3 +82,21 @@ export interface ValidationError {
     type: string;
   }>;
 }
+
+export interface RepoUrlInformation {
+  owner: string
+  repo: string
+}
+
+export interface GithubBranchModel {
+  name: string,
+  sha: string,
+  protected: boolean,
+  is_default: boolean
+}
+
+export interface RepoBranchResponse {
+  repository: string,
+  branches: GithubBranchModel[];
+  total_count: number;
+}
