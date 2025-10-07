@@ -465,6 +465,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   logout(): void {
     // console.log('Logging out...');
-    this.githubService.logout();
+    // this.githubService.logout();
+    this.authService.clearAuth();
   }
 }

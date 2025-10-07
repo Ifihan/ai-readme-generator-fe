@@ -55,9 +55,9 @@
               </a>
             </div>
             
-            <div class="type-badge" [class.badge-new]="entry.generation_type === 'new'" [class.badge-update]="entry.generation_type === 'update'">
+            <!-- <div class="type-badge" [class.badge-new]="entry.generation_type === 'new'" [class.badge-update]="entry.generation_type === 'update'">
               {{ entry.generation_type === 'new' ? 'New' : 'Update' }}
-            </div>
+            </div> -->
           </div>
 
           <div class="card-body">
@@ -103,13 +103,24 @@
               </div>
             </div>
             
-            <button class="view-content-btn" (click)="toggleContent(entry)" type="button">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              {{ entry.showContent ? 'Hide' : 'View' }} Content
-            </button>
+            <div>
+              <button class="view-content-btn" (click)="toggleContent(entry)" type="button" style="margin-right: 10px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {{ entry.showContent ? 'Hide' : 'View' }} Content
+              </button>
+
+              <button class="view-content-btn" (click)="downloadContent(entry.content, entry.repository_name)" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Download README
+              </button>
+            </div>
           </div>
           
           <div class="content-preview" *ngIf="entry.showContent">

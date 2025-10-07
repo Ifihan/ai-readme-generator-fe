@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 import { API_ENDPOINTS, ERROR_MESSAGES } from '../constants/app.constants';
 import { NotificationService } from './notification.service';
 import { LoggerService } from './logger.service';
-import { SectionTemplate, GenerateReadmeRequest, GenerateReadmeResponse, RefineReadmeRequest, RefineReadmeResponse, SaveReadmeRequest, SaveReadmeResponse, DownloadReadmeRequest, DownloadReadmeResponse, PreviewReadmeResponse, AnalyzeRepositoryResponse, ReadmeSection } from '../models/readme.model';
+import { SectionTemplate, GenerateReadmeRequest, GenerateReadmeResponse, RefineReadmeRequest, RefineReadmeResponse, SaveReadmeRequest, SaveReadmeResponse, DownloadReadmeRequest, DownloadReadmeResponse, PreviewReadmeResponse, AnalyzeRepositoryResponse, ReadmeSection, RepoUrlInformation, RepoBranchResponse } from '../models/readme.model';
 import { HistoryResponse } from '../models/history.model';
 // Section Template Interfaces
 
@@ -174,6 +174,27 @@ export class ReadmeService {
     );
   }
 
+  getRepositoryBranches(owner: string, repo: string): Observable<RepoBranchResponse> {
+    this.logger.info(`Analyzing repository ${owner}/${repo}`);
+
+    // const headers = new HttpHeaders({
+    //   'Authorization': authToken
+    // });
+
+    return this.http.get<RepoBranchResponse>(
+      `${this.API_URL}/readme/branches/${owner}/${repo}`,
+      // { headers }
+    ).pipe(
+      tap(response => {
+        this.logger.info("Successfully fetched branches");
+      }),
+      catchError(error => {
+        this.logger.error('Error analyzing repository:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
   /**
    * Helper method to create a basic README section
    */
@@ -242,5 +263,27 @@ export class ReadmeService {
       branch: branch || 'main'
     };
     return request;
+  }
+
+  extractMetadataFromGithubUrl(github_url: string): RepoUrlInformation | null {
+    try {
+      const url = new URL(github_url);
+      if (url.hostname !== 'github.com') {
+        return null;
+      }
+      
+      const parts = url.pathname.split('/').filter(p => p);
+      if (parts.length < 2) {
+        return null;
+      }
+
+      return {
+        owner: parts[0],
+        repo: parts[1]
+      };
+      
+    } catch {
+      return null;
+    }
   }
 }
