@@ -7,6 +7,8 @@ import { FormsModule } from '@angular/forms';
 import { PageLayoutComponent } from '../../shared/components/page-layout/page-layout.component';
 import { MarkdownEditorComponent } from '../../shared/components/markdown-editor/markdown-editor/markdown-editor.component';
 import { SectionTemplate, ReadmeSection, GenerateReadmeRequest, GithubBranchModel } from '../../core/models/readme.model';
+import { LoggerService } from '../../core/services/logger.service';
+import { tap } from 'rxjs';
 
 @Component({
   selector: 'app-readme-generate',
@@ -46,14 +48,18 @@ export class ReadmeGenerateComponent implements OnInit {
   // Commit message input state
   showCommitMessageInput = false;
   commitMessage = '';
-  branches: GithubBranchModel[] = []
+  branchSearch = '';
+  branches: GithubBranchModel[] = [];
+  filteredBranches: GithubBranchModel[] = [];
   selectedBranch: GithubBranchModel | null = null;
+  showBranchDropdown: boolean = false
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private readmeService: ReadmeService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private logger: LoggerService
   ) { }
 
   ngOnInit(): void {
@@ -174,11 +180,69 @@ export class ReadmeGenerateComponent implements OnInit {
     this.notificationService.success('README downloaded successfully!');
   }
 
-  fetchBranches(){
+  fetchBranches() {
     const repoData = this.readmeService.extractMetadataFromGithubUrl(this.repoUrl);
-    if(!repoData) return null;
+    if (!repoData) return;
+
     const { owner, repo } = repoData;
-    return this.readmeService.getRepositoryBranches(owner, repo)
+    // this.readmeService.getRepositoryBranches(owner, repo)
+    //   .subscribe({
+    //     next: (data) => {
+    //       this.branches = data.branches;
+    //       this.filteredBranches = data.branches;
+    //       this.loading = false;
+    //     },
+    //     error: (error) => {
+    //       this.notificationService.error("Failed to retrieve branches");
+    //       this.loading = false;
+    //     }
+    //   });
+
+     return this.readmeService.getRepositoryBranches(owner, repo)
+      .pipe(
+        tap(data => {
+          this.branches = data.branches;
+          this.filteredBranches = data.branches;
+          this.loading = false;
+        })
+      )
+  }
+
+  filterBranches() {
+    this.filteredBranches = this.branches.filter((b) => {
+      const r = new RegExp(`^${this.branchSearch}`);
+      return r.test(b.name)
+    });
+  }
+
+  selectBranch(branch: GithubBranchModel) {
+    this.selectedBranch = branch;
+    this.branchSearch = branch.name;
+    this.logger.info("selected " + branch.name)
+    this.showBranchDropdown = false;
+  }
+
+  createBranch(branch_name: string) {
+    const repoData = this.readmeService.extractMetadataFromGithubUrl(this.repoUrl);
+    if (!repoData) return;
+
+    const { owner, repo } = repoData;
+    this.loading = true;
+    this.readmeService.createRepositoryBranch(owner, repo, branch_name)
+    .subscribe({
+      next: () => {
+        this.fetchBranches()
+        ?.subscribe({
+          next: (data) => {
+            const createdBranch = data.branches.find(b => b.name === branch_name)
+            if(createdBranch) this.selectBranch(createdBranch);
+          }
+        });
+      },
+      error: () => {
+
+      }
+    });
   }
 
   saveToGitHub() {
@@ -189,16 +253,7 @@ export class ReadmeGenerateComponent implements OnInit {
       this.showCommitMessageInput = true;
       // Provide a sensible default suggestion
       this.loading = true;
-      this.fetchBranches()?.subscribe({
-        next: (data) => {
-          this.branches = data.branches;
-          this.loading = false;
-        },
-        error: (error) => {
-          this.notificationService.error("Failed to retrieve branches");
-          this.loading = false;
-        }
-      });
+      this.fetchBranches()?.subscribe();
       this.commitMessage = this.commitMessage || 'docs: add generated README';
       return;
     }

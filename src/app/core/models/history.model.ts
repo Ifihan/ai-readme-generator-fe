@@ -9,6 +9,8 @@ export interface HistoryEntry {
   generation_type: string;
   sections_generated: string[];
   showContent?: boolean; // UI state property
+  isDeletedFromView?: boolean
+  isDisabled?: boolean
 }
 
 export interface HistoryResponse {

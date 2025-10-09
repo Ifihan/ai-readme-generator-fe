@@ -219,21 +219,45 @@
         </div>
 
         <!-- add branch select input here -->
-        <div class="branch-select-field commit-message-field" *ngIf="branches.length">
-          <label for="selectedBranch">Target Branch</label>
-          <select
-            id="selectedBranch"
-            [(ngModel)]="selectedBranch"
-            name="selectedBranch"
-            class="branch-select"
-          >
-            <option [value]="null" disabled>Select Branch</option>
-            <option *ngFor="let branch of branches" [ngValue]="branch">
-              {{ branch.name }}
-            </option>
-          </select>
+        <div
+          class="branch-select-field commit-message-field"
+          *ngIf="branches.length"
+        >
+          <label for="branchSearch">Target Branch</label>
+
+          <div class="branch-select-wrapper">
+            <input
+              type="text"
+              id="branchSearch"
+              [(ngModel)]="branchSearch"
+              (input)="filterBranches()"
+              (focus)="showBranchDropdown = true"
+              placeholder="Search or create a branch"
+              class="branch-search-input"
+            />
+
+            <ul *ngIf="showBranchDropdown" class="branch-dropdown">
+              <li
+                *ngFor="let branch of filteredBranches"
+                (click)="selectBranch(branch)"
+                class="branch-option"
+              >
+                {{ branch.name }}
+              </li>
+              <li
+                *ngIf="!filteredBranches.length && branchSearch"
+                class="branch-create"
+                (click)="createBranch(branchSearch)"
+                [ngStyle]="{'pointer-events': loading ? 'none' : 'initial'}"
+              >
+                ➕ Create new branch "{{ branchSearch }}"
+              </li>
+            </ul>
+          </div>
+
           <small class="hint"
-            >Select the branch where you want to push the README</small
+            >Select or create the branch where you want to push the
+            README</small
           >
         </div>
 
@@ -243,7 +267,7 @@
             class="btn-primary"
             (click)="downloadReadme()"
             [disabled]="downloading"
-            style="margin-right: 10px;"
+            style="margin-right: 10px"
           >
             <svg
               width="16"
@@ -286,7 +310,9 @@
             class="btn-github"
             (click)="saveToGitHub()"
             [disabled]="
-              saving || (showCommitMessageInput && !commitMessage.trim()) || loading
+              saving ||
+              (showCommitMessageInput && !commitMessage.trim()) ||
+              loading
             "
           >
             <svg
