@@ -24,6 +24,48 @@ import { tap } from 'rxjs';
   standalone: true
 })
 export class ReadmeGenerateComponent implements OnInit {
+  feedback: {
+    general_comments: string;
+    rating: string
+    suggestions?: string
+    helpful_sections: string[]
+    problematic_sections: string[]
+  } = {
+    general_comments: "",
+    rating: "",
+    suggestions: "",
+    helpful_sections: [],
+    problematic_sections: []
+  };
+  problematicSectionInput: any = [''];
+  helpfulSectionInput: any = [''];
+  isSubmittingFeedback: any = false;
+  isPanelOpen: boolean = false;
+
+  toggleFeedbackSection(section_type: "helpful" | "problematic", section: string) {
+    if(section_type == "helpful"){
+      if(this.feedback.helpful_sections.includes(section)){
+        this.feedback.helpful_sections = this.feedback.helpful_sections.filter(s => s != section)
+      }
+      else this.feedback.helpful_sections.push(section)
+    }
+
+    if(section_type == "problematic"){
+      if(this.feedback.problematic_sections.includes(section)){
+        this.feedback.problematic_sections = this.feedback.problematic_sections.filter(s => s != section)
+      }
+      else this.feedback.problematic_sections.push(section)
+    }
+  }
+
+  submitFeedback($event: SubmitEvent) {
+    throw new Error('Method not implemented.');
+  }
+
+  togglePanel() {
+    this.isPanelOpen = !this.isPanelOpen;
+  }
+
   repoUrl: string = '';
   sectionTemplates: SectionTemplate[] = [];
   selectedSections: SectionTemplate[] = [];
@@ -52,7 +94,10 @@ export class ReadmeGenerateComponent implements OnInit {
   branches: GithubBranchModel[] = [];
   filteredBranches: GithubBranchModel[] = [];
   selectedBranch: GithubBranchModel | null = null;
-  showBranchDropdown: boolean = false
+  showBranchDropdown: boolean = false;
+  hasDisplayedFeedbackFromEditor: boolean = false;
+  showFeedbackPopup: boolean = false;
+  feedbackChatMessage: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -154,6 +199,10 @@ export class ReadmeGenerateComponent implements OnInit {
   onReadmeEdit() {
     // This method can be used for any real-time editing logic if needed
     // For now, the two-way binding handles the content updates
+    setTimeout(() => {
+      this.notificationService.info("Looks like our generated readme wasn’t perfect. Mind sharing some feedback?")
+      this.showFeedbackPopup = true;
+    }, 1500)
   }
 
   onResetRequested() {
@@ -178,6 +227,10 @@ export class ReadmeGenerateComponent implements OnInit {
 
     this.downloading = false;
     this.notificationService.success('README downloaded successfully!');
+    setTimeout(() => {
+      this.notificationService.info("Thank you for using our service. Kindly drop a review")
+      this.showFeedbackPopup = true;
+    }, 2000);
   }
 
   fetchBranches() {
@@ -198,7 +251,7 @@ export class ReadmeGenerateComponent implements OnInit {
     //     }
     //   });
 
-     return this.readmeService.getRepositoryBranches(owner, repo)
+    return this.readmeService.getRepositoryBranches(owner, repo)
       .pipe(
         tap(data => {
           this.branches = data.branches;
@@ -229,20 +282,20 @@ export class ReadmeGenerateComponent implements OnInit {
     const { owner, repo } = repoData;
     this.loading = true;
     this.readmeService.createRepositoryBranch(owner, repo, branch_name)
-    .subscribe({
-      next: () => {
-        this.fetchBranches()
-        ?.subscribe({
-          next: (data) => {
-            const createdBranch = data.branches.find(b => b.name === branch_name)
-            if(createdBranch) this.selectBranch(createdBranch);
-          }
-        });
-      },
-      error: () => {
+      .subscribe({
+        next: () => {
+          this.fetchBranches()
+            ?.subscribe({
+              next: (data) => {
+                const createdBranch = data.branches.find(b => b.name === branch_name)
+                if (createdBranch) this.selectBranch(createdBranch);
+              }
+            });
+        },
+        error: () => {
 
-      }
-    });
+        }
+      });
   }
 
   saveToGitHub() {
