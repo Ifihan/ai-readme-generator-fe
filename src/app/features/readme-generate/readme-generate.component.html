@@ -373,7 +373,7 @@
   </div>
   
   <!-- Feedback Chat Component -->
-<div class="feedback-chat" [class.show]="isPanelOpen" *ngIf="showFeedbackPopup">
+<div class="feedback-chat" [class.show]="isPanelOpen" *ngIf="showFeedbackPopup && !hasSentFeedback">
   <button 
     class="feedback-button"
     [class.active]="isPanelOpen"
@@ -402,7 +402,7 @@
     </div>
     
     <div class="feedback-content">
-      <form (submit)="submitFeedback($event)">
+      <form (submit)="submitFeedback()">
         
         <!-- General Comments -->
         <div class="form-group">

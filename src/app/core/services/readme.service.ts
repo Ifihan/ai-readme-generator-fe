@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 import { API_ENDPOINTS, ERROR_MESSAGES } from '../constants/app.constants';
 import { NotificationService } from './notification.service';
 import { LoggerService } from './logger.service';
-import { SectionTemplate, GenerateReadmeRequest, GenerateReadmeResponse, RefineReadmeRequest, RefineReadmeResponse, SaveReadmeRequest, SaveReadmeResponse, DownloadReadmeRequest, DownloadReadmeResponse, PreviewReadmeResponse, AnalyzeRepositoryResponse, ReadmeSection, RepoUrlInformation, RepoBranchResponse } from '../models/readme.model';
+import { SectionTemplate, GenerateReadmeRequest, GenerateReadmeResponse, RefineReadmeRequest, RefineReadmeResponse, SaveReadmeRequest, SaveReadmeResponse, DownloadReadmeRequest, DownloadReadmeResponse, PreviewReadmeResponse, AnalyzeRepositoryResponse, ReadmeSection, RepoUrlInformation, RepoBranchResponse, CreateFeedbackRequestResponse } from '../models/readme.model';
 import { HistoryEntry, HistoryResponse } from '../models/history.model';
 // Section Template Interfaces
 
@@ -312,5 +312,21 @@ export class ReadmeService {
         return throwError(() => error);
       })
     );
+  }
+
+  sendFeedBack(request: {
+    general_comments: string
+    helpful_sections: string[]
+    problematic_sections: string[]
+    rating: string
+    readme_history_id: string
+    suggestions?: string
+  }): Observable<CreateFeedbackRequestResponse> {
+    return this.http.post<CreateFeedbackRequestResponse>(`${this.API_URL}/feedback/`, request).pipe(
+      catchError(error => {
+        this.notificationService.error('Failed to submit feedback');
+        return throwError(() => error);
+      })
+    )
   }
 }

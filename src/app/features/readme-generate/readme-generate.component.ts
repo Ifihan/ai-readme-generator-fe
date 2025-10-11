@@ -31,35 +31,70 @@ export class ReadmeGenerateComponent implements OnInit {
     helpful_sections: string[]
     problematic_sections: string[]
   } = {
-    general_comments: "",
-    rating: "",
-    suggestions: "",
-    helpful_sections: [],
-    problematic_sections: []
-  };
-  problematicSectionInput: any = [''];
-  helpfulSectionInput: any = [''];
-  isSubmittingFeedback: any = false;
+      general_comments: "",
+      rating: "",
+      suggestions: "",
+      helpful_sections: [],
+      problematic_sections: []
+    };
+  problematicSectionInput: string[] = [''];
+  helpfulSectionInput: string[] = [''];
+  isSubmittingFeedback: boolean = false;
   isPanelOpen: boolean = false;
+  hasSentFeedback: boolean = false;
 
   toggleFeedbackSection(section_type: "helpful" | "problematic", section: string) {
-    if(section_type == "helpful"){
-      if(this.feedback.helpful_sections.includes(section)){
+    if (section_type == "helpful") {
+      if (this.feedback.helpful_sections.includes(section)) {
         this.feedback.helpful_sections = this.feedback.helpful_sections.filter(s => s != section)
       }
       else this.feedback.helpful_sections.push(section)
     }
 
-    if(section_type == "problematic"){
-      if(this.feedback.problematic_sections.includes(section)){
+    if (section_type == "problematic") {
+      if (this.feedback.problematic_sections.includes(section)) {
         this.feedback.problematic_sections = this.feedback.problematic_sections.filter(s => s != section)
       }
       else this.feedback.problematic_sections.push(section)
     }
   }
 
-  submitFeedback($event: SubmitEvent) {
-    throw new Error('Method not implemented.');
+  submitFeedback() {
+    if(!this.feedback.helpful_sections.length){
+      this.notificationService.info("Please select one or more helpful sections.");
+      return;
+    }
+
+    if(!this.feedback.problematic_sections.length){
+      this.notificationService.info("Please select one or more problematic sections.");
+      return;
+    }
+
+    if(!this.feedback.general_comments || (this.feedback.general_comments.length < 10)){
+      this.notificationService.info("A minimum length of 10 characters is required for the general comment.");
+      return;
+    }
+    
+    this.isSubmittingFeedback = true;
+    this.readmeService.sendFeedBack({
+      readme_history_id: this.entryId as string,
+      helpful_sections: this.feedback.helpful_sections,
+      problematic_sections: this.feedback.problematic_sections,
+      general_comments: this.feedback.general_comments,
+      suggestions: this.feedback.suggestions,
+      rating: this.feedback.rating
+    }).subscribe({
+      next: () => {
+        this.notificationService.success('Thank you for your feedback');
+        this.isSubmittingFeedback = false;
+        this.showFeedbackPopup = false;
+        this.isPanelOpen = false;
+        this.hasSentFeedback = true;
+      },
+      error: () => {
+        this.notificationService.error("Failed to submit feedback. Please try again");
+      }
+    })
   }
 
   togglePanel() {
@@ -98,6 +133,7 @@ export class ReadmeGenerateComponent implements OnInit {
   hasDisplayedFeedbackFromEditor: boolean = false;
   showFeedbackPopup: boolean = false;
   feedbackChatMessage: string = '';
+  entryId: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
@@ -173,6 +209,7 @@ export class ReadmeGenerateComponent implements OnInit {
         res.content = this.cleanMarkdownContent(res.content);
         this.generatedReadme = res.content;
         this.editableReadme = res.content; // Initialize editable copy
+        this.entryId = res.entry_id;
         // Defensive: API may omit sections_generated; ensure it's always an array
         this.sectionsIncluded = Array.isArray(res.sections_generated) ? res.sections_generated : [];
         this.showPreview = true;
@@ -199,10 +236,11 @@ export class ReadmeGenerateComponent implements OnInit {
   onReadmeEdit() {
     // This method can be used for any real-time editing logic if needed
     // For now, the two-way binding handles the content updates
-    setTimeout(() => {
-      this.notificationService.info("Looks like our generated readme wasn’t perfect. Mind sharing some feedback?")
-      this.showFeedbackPopup = true;
-    }, 1500)
+    if(!this.hasSentFeedback)
+      setTimeout(() => {
+        this.notificationService.info("Looks like our generated readme wasn’t perfect. Mind sharing some feedback?")
+        this.showFeedbackPopup = true;
+      }, 1500)
   }
 
   onResetRequested() {
@@ -227,10 +265,11 @@ export class ReadmeGenerateComponent implements OnInit {
 
     this.downloading = false;
     this.notificationService.success('README downloaded successfully!');
-    setTimeout(() => {
-      this.notificationService.info("Thank you for using our service. Kindly drop a review")
-      this.showFeedbackPopup = true;
-    }, 2000);
+    if(!this.hasSentFeedback)
+      setTimeout(() => {
+        this.notificationService.info("Thank you for using our service. Kindly drop a review")
+        this.showFeedbackPopup = true;
+      }, 2000);
   }
 
   fetchBranches() {
