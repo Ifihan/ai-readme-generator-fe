@@ -219,21 +219,45 @@
         </div>
 
         <!-- add branch select input here -->
-        <div class="branch-select-field commit-message-field" *ngIf="branches.length">
-          <label for="selectedBranch">Target Branch</label>
-          <select
-            id="selectedBranch"
-            [(ngModel)]="selectedBranch"
-            name="selectedBranch"
-            class="branch-select"
-          >
-            <option [value]="null" disabled>Select Branch</option>
-            <option *ngFor="let branch of branches" [ngValue]="branch">
-              {{ branch.name }}
-            </option>
-          </select>
+        <div
+          class="branch-select-field commit-message-field"
+          *ngIf="branches.length"
+        >
+          <label for="branchSearch">Target Branch</label>
+
+          <div class="branch-select-wrapper">
+            <input
+              type="text"
+              id="branchSearch"
+              [(ngModel)]="branchSearch"
+              (input)="filterBranches()"
+              (focus)="showBranchDropdown = true"
+              placeholder="Search or create a branch"
+              class="branch-search-input"
+            />
+
+            <ul *ngIf="showBranchDropdown" class="branch-dropdown">
+              <li
+                *ngFor="let branch of filteredBranches"
+                (click)="selectBranch(branch)"
+                class="branch-option"
+              >
+                {{ branch.name }}
+              </li>
+              <li
+                *ngIf="!filteredBranches.length && branchSearch"
+                class="branch-create"
+                (click)="createBranch(branchSearch)"
+                [ngStyle]="{'pointer-events': loading ? 'none' : 'initial'}"
+              >
+                ➕ Create new branch "{{ branchSearch }}"
+              </li>
+            </ul>
+          </div>
+
           <small class="hint"
-            >Select the branch where you want to push the README</small
+            >Select or create the branch where you want to push the
+            README</small
           >
         </div>
 
@@ -243,7 +267,7 @@
             class="btn-primary"
             (click)="downloadReadme()"
             [disabled]="downloading"
-            style="margin-right: 10px;"
+            style="margin-right: 10px"
           >
             <svg
               width="16"
@@ -286,7 +310,16 @@
             class="btn-github"
             (click)="saveToGitHub()"
             [disabled]="
-              saving || (showCommitMessageInput && !commitMessage.trim()) || loading
+              saving ||
+              (showCommitMessageInput && !commitMessage.trim()) ||
+              loading || (!selectedBranch && branches.length)
+            "
+            [title]="
+              saving ? 'Currently pushing changes...' :
+              loading ? 'Please wait while loading...' :
+              !selectedBranch && branches.length ? 'Please select a target branch first' :
+              (showCommitMessageInput && !commitMessage.trim()) ? 'Please enter a commit message' :
+              'Push changes to GitHub repository'
             "
           >
             <svg
@@ -338,4 +371,148 @@
       </div>
     </div>
   </div>
+  
+  <!-- Feedback Chat Component -->
+<div class="feedback-chat" [class.show]="isPanelOpen" *ngIf="showFeedbackPopup && !hasSentFeedback">
+  <button 
+    class="feedback-button"
+    [class.active]="isPanelOpen"
+    (click)="togglePanel()">
+    <svg 
+      class="wave-icon"
+      width="20" 
+      height="20" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg">
+      <path 
+        d="M5.5 11C5.5 8.79086 7.29086 7 9.5 7C10.9659 7 12.2096 7.85119 12.7669 9.08762C13.1711 8.41539 13.8846 7.95 14.7 7.95C16.2464 7.95 17.5 9.20355 17.5 10.75C17.5 11.0642 17.4595 11.3688 17.3845 11.6584C18.3236 11.9857 19 12.8743 19 13.925C19 15.2657 17.9254 16.35 16.6 16.35H8C6.067 16.35 4.5 14.783 4.5 12.85C4.5 11.0737 5.82014 9.61869 7.53846 9.38538" 
+        stroke="currentColor" 
+        stroke-width="2" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+    </svg>
+    <span>Feedback</span>
+  </button>
+
+  <div class="feedback-panel">
+    <div class="feedback-header">
+      <h3>Share Your Feedback</h3>
+      <button class="close-button" (click)="togglePanel()">×</button>
+    </div>
+    
+    <div class="feedback-content">
+      <form (submit)="submitFeedback()">
+        
+        <!-- General Comments -->
+        <div class="form-group">
+          <label for="general-comments">General Comments</label>
+          <textarea
+            id="general-comments"
+            [(ngModel)]="feedback.general_comments"
+            name="general_comments"
+            placeholder="Share your overall thoughts about the README..."
+            rows="3">
+          </textarea>
+        </div>
+
+        <!-- Rating -->
+        <div class="form-group">
+          <label>Overall Rating</label>
+          <div class="rating-buttons">
+            <button 
+              type="button"
+              class="rating-btn"
+              [class.active]="feedback.rating === 'excellent'"
+              (click)="feedback.rating = 'excellent'">
+              Excellent
+            </button>
+            <button 
+              type="button"
+              class="rating-btn"
+              [class.active]="feedback.rating === 'good'"
+              (click)="feedback.rating = 'good'">
+              Good
+            </button>
+            <button 
+              type="button"
+              class="rating-btn"
+              [class.active]="feedback.rating === 'average'"
+              (click)="feedback.rating = 'average'">
+              Average
+            </button>
+            <button 
+              type="button"
+              class="rating-btn"
+              [class.active]="feedback.rating === 'poor'"
+              (click)="feedback.rating = 'poor'">
+              Poor
+            </button>
+          </div>
+        </div>
+
+        <!-- Helpful Sections -->
+        <div class="form-group">
+          <label>Helpful Sections (Optional)</label>
+          <div class="section-tags">
+            <span
+              *ngFor="let section of sectionsIncluded"
+              class="section-tag select"
+              [ngClass]="
+                {'active': feedback.helpful_sections.includes(section)}
+              "
+              (click)="toggleFeedbackSection('helpful', section)"
+              >{{ section }}</span
+            >
+          </div>
+        </div>
+
+        <!-- Problematic Sections -->
+        <div class="form-group">
+          <label>Sections Needing Improvement (Optional)</label>
+          <div class="section-tags">
+            <span
+              *ngFor="let section of sectionsIncluded"
+              class="section-tag select"
+              [ngClass]="
+                {'active': feedback.problematic_sections.includes(section)}
+              "
+              (click)="toggleFeedbackSection('problematic', section)"
+              >{{ section }}</span
+            >
+          </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="form-group">
+          <label for="suggestions">Suggestions (Optional)</label>
+          <textarea
+            id="suggestions"
+            [(ngModel)]="feedback.suggestions"
+            name="suggestions"
+            placeholder="What would make this README better?"
+            rows="3">
+          </textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit"
+          class="submit-feedback"
+          [disabled]="isSubmittingFeedback || !feedback.general_comments">
+          <span *ngIf="!isSubmittingFeedback">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Send Feedback
+          </span>
+          <span *ngIf="isSubmittingFeedback">
+            <span class="spinner"></span>
+            Sending...
+          </span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
 </app-page-layout>

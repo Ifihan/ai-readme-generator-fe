@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, ObservableLike, throwError } from 'rxjs';
 import { catchError, tap, switchMap, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { API_ENDPOINTS, ERROR_MESSAGES } from '../constants/app.constants';
 import { NotificationService } from './notification.service';
 import { LoggerService } from './logger.service';
-import { SectionTemplate, GenerateReadmeRequest, GenerateReadmeResponse, RefineReadmeRequest, RefineReadmeResponse, SaveReadmeRequest, SaveReadmeResponse, DownloadReadmeRequest, DownloadReadmeResponse, PreviewReadmeResponse, AnalyzeRepositoryResponse, ReadmeSection, RepoUrlInformation, RepoBranchResponse } from '../models/readme.model';
-import { HistoryResponse } from '../models/history.model';
+import { SectionTemplate, GenerateReadmeRequest, GenerateReadmeResponse, RefineReadmeRequest, RefineReadmeResponse, SaveReadmeRequest, SaveReadmeResponse, DownloadReadmeRequest, DownloadReadmeResponse, PreviewReadmeResponse, AnalyzeRepositoryResponse, ReadmeSection, RepoUrlInformation, RepoBranchResponse, CreateFeedbackRequestResponse } from '../models/readme.model';
+import { HistoryEntry, HistoryResponse } from '../models/history.model';
 // Section Template Interfaces
 
 @Injectable({ providedIn: 'root' })
@@ -195,6 +195,22 @@ export class ReadmeService {
     );
   }
 
+  createRepositoryBranch(owner: string, repo: string, branch_name: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.API_URL}/readme/branches/${owner}/${repo}?branch_name=${branch_name}`,
+      {}
+      // { headers }
+    ).pipe(
+      tap(response => {
+        this.logger.info("Successfully created branch");
+      }),
+      catchError(error => {
+        this.logger.error('Error creating branch:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
   /**
    * Helper method to create a basic README section
    */
@@ -285,5 +301,32 @@ export class ReadmeService {
     } catch {
       return null;
     }
+  }
+
+  deleteHistoryEntry(entry: HistoryEntry) {
+    return this.http.delete<string>(`${this.API_URL}/readme/history/${entry.id}`).pipe(
+      tap(response => this.logger.info('README history entry deleted:', response)),
+      catchError(error => {
+        this.logger.error('Error fetching README history:', error);
+        this.notificationService.error('Failed to delete history entry');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  sendFeedBack(request: {
+    general_comments: string
+    helpful_sections: string[]
+    problematic_sections: string[]
+    rating: string
+    readme_history_id: string
+    suggestions?: string
+  }): Observable<CreateFeedbackRequestResponse> {
+    return this.http.post<CreateFeedbackRequestResponse>(`${this.API_URL}/feedback/`, request).pipe(
+      catchError(error => {
+        this.notificationService.error('Failed to submit feedback');
+        return throwError(() => error);
+      })
+    )
   }
 }

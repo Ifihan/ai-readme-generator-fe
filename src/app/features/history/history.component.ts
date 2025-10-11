@@ -6,6 +6,7 @@ import { ReadmeService } from '../../core/services/readme.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { PageLayoutComponent } from '../../shared/components/page-layout/page-layout.component';
 import { HistoryEntry, HistoryResponse } from '../../core/models/history.model';
+// import { trigger, transition, style, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-history',
@@ -45,7 +46,8 @@ export class HistoryComponent implements OnInit {
 
     this.readmeService.getReadmeHistory(this.currentPage, this.pageSize).subscribe({
       next: (response: HistoryResponse) => {
-        this.entries = response.entries;
+        this.entries = response.entries.map(e => 
+          ({ ...e, isDeletedFromView: false, isDisabled: false }));
         this.totalCount = response.total_count;
         this.totalPages = Math.ceil(this.totalCount / this.pageSize);
         this.loading = false;
@@ -139,5 +141,26 @@ export class HistoryComponent implements OnInit {
     // Cleanup
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
+  }
+
+  deleteEntry(entry: HistoryEntry){
+    const index = this.entries.findIndex(e => e.id === entry.id);
+    entry.isDisabled = true;
+    this.readmeService.deleteHistoryEntry(entry)
+    .subscribe({
+      next: (_) => {
+        entry.isDeletedFromView = true;
+        setTimeout(() => 
+          this.entries = this.entries.filter(e => e.id !== entry.id), 300
+        );
+      },
+      error: (_) => {
+        entry.isDisabled = false;
+        entry.isDeletedFromView = false;
+        this.entries[index] = entry;
+      }
+    });
+
+    return
   }
 }

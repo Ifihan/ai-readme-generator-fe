@@ -7,6 +7,8 @@ import { FormsModule } from '@angular/forms';
 import { PageLayoutComponent } from '../../shared/components/page-layout/page-layout.component';
 import { MarkdownEditorComponent } from '../../shared/components/markdown-editor/markdown-editor/markdown-editor.component';
 import { SectionTemplate, ReadmeSection, GenerateReadmeRequest, GithubBranchModel } from '../../core/models/readme.model';
+import { LoggerService } from '../../core/services/logger.service';
+import { tap } from 'rxjs';
 
 @Component({
   selector: 'app-readme-generate',
@@ -22,6 +24,83 @@ import { SectionTemplate, ReadmeSection, GenerateReadmeRequest, GithubBranchMode
   standalone: true
 })
 export class ReadmeGenerateComponent implements OnInit {
+  feedback: {
+    general_comments: string;
+    rating: string
+    suggestions?: string
+    helpful_sections: string[]
+    problematic_sections: string[]
+  } = {
+      general_comments: "",
+      rating: "",
+      suggestions: "",
+      helpful_sections: [],
+      problematic_sections: []
+    };
+  problematicSectionInput: string[] = [''];
+  helpfulSectionInput: string[] = [''];
+  isSubmittingFeedback: boolean = false;
+  isPanelOpen: boolean = false;
+  hasSentFeedback: boolean = false;
+
+  toggleFeedbackSection(section_type: "helpful" | "problematic", section: string) {
+    if (section_type == "helpful") {
+      if (this.feedback.helpful_sections.includes(section)) {
+        this.feedback.helpful_sections = this.feedback.helpful_sections.filter(s => s != section)
+      }
+      else this.feedback.helpful_sections.push(section)
+    }
+
+    if (section_type == "problematic") {
+      if (this.feedback.problematic_sections.includes(section)) {
+        this.feedback.problematic_sections = this.feedback.problematic_sections.filter(s => s != section)
+      }
+      else this.feedback.problematic_sections.push(section)
+    }
+  }
+
+  submitFeedback() {
+    if(!this.feedback.helpful_sections.length){
+      this.notificationService.info("Please select one or more helpful sections.");
+      return;
+    }
+
+    if(!this.feedback.problematic_sections.length){
+      this.notificationService.info("Please select one or more problematic sections.");
+      return;
+    }
+
+    if(!this.feedback.general_comments || (this.feedback.general_comments.length < 10)){
+      this.notificationService.info("A minimum length of 10 characters is required for the general comment.");
+      return;
+    }
+    
+    this.isSubmittingFeedback = true;
+    this.readmeService.sendFeedBack({
+      readme_history_id: this.entryId as string,
+      helpful_sections: this.feedback.helpful_sections,
+      problematic_sections: this.feedback.problematic_sections,
+      general_comments: this.feedback.general_comments,
+      suggestions: this.feedback.suggestions,
+      rating: this.feedback.rating
+    }).subscribe({
+      next: () => {
+        this.notificationService.success('Thank you for your feedback');
+        this.isSubmittingFeedback = false;
+        this.showFeedbackPopup = false;
+        this.isPanelOpen = false;
+        this.hasSentFeedback = true;
+      },
+      error: () => {
+        this.notificationService.error("Failed to submit feedback. Please try again");
+      }
+    })
+  }
+
+  togglePanel() {
+    this.isPanelOpen = !this.isPanelOpen;
+  }
+
   repoUrl: string = '';
   sectionTemplates: SectionTemplate[] = [];
   selectedSections: SectionTemplate[] = [];
@@ -46,14 +125,22 @@ export class ReadmeGenerateComponent implements OnInit {
   // Commit message input state
   showCommitMessageInput = false;
   commitMessage = '';
-  branches: GithubBranchModel[] = []
+  branchSearch = '';
+  branches: GithubBranchModel[] = [];
+  filteredBranches: GithubBranchModel[] = [];
   selectedBranch: GithubBranchModel | null = null;
+  showBranchDropdown: boolean = false;
+  hasDisplayedFeedbackFromEditor: boolean = false;
+  showFeedbackPopup: boolean = false;
+  feedbackChatMessage: string = '';
+  entryId: string | null = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private readmeService: ReadmeService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private logger: LoggerService
   ) { }
 
   ngOnInit(): void {
@@ -122,6 +209,7 @@ export class ReadmeGenerateComponent implements OnInit {
         res.content = this.cleanMarkdownContent(res.content);
         this.generatedReadme = res.content;
         this.editableReadme = res.content; // Initialize editable copy
+        this.entryId = res.entry_id;
         // Defensive: API may omit sections_generated; ensure it's always an array
         this.sectionsIncluded = Array.isArray(res.sections_generated) ? res.sections_generated : [];
         this.showPreview = true;
@@ -148,6 +236,11 @@ export class ReadmeGenerateComponent implements OnInit {
   onReadmeEdit() {
     // This method can be used for any real-time editing logic if needed
     // For now, the two-way binding handles the content updates
+    if(!this.hasSentFeedback)
+      setTimeout(() => {
+        this.notificationService.info("Looks like our generated readme wasn’t perfect. Mind sharing some feedback?")
+        this.showFeedbackPopup = true;
+      }, 1500)
   }
 
   onResetRequested() {
@@ -172,13 +265,76 @@ export class ReadmeGenerateComponent implements OnInit {
 
     this.downloading = false;
     this.notificationService.success('README downloaded successfully!');
+    if(!this.hasSentFeedback)
+      setTimeout(() => {
+        this.notificationService.info("Thank you for using our service. Kindly drop a review")
+        this.showFeedbackPopup = true;
+      }, 2000);
   }
 
-  fetchBranches(){
+  fetchBranches() {
     const repoData = this.readmeService.extractMetadataFromGithubUrl(this.repoUrl);
-    if(!repoData) return null;
+    if (!repoData) return;
+
     const { owner, repo } = repoData;
+    // this.readmeService.getRepositoryBranches(owner, repo)
+    //   .subscribe({
+    //     next: (data) => {
+    //       this.branches = data.branches;
+    //       this.filteredBranches = data.branches;
+    //       this.loading = false;
+    //     },
+    //     error: (error) => {
+    //       this.notificationService.error("Failed to retrieve branches");
+    //       this.loading = false;
+    //     }
+    //   });
+
     return this.readmeService.getRepositoryBranches(owner, repo)
+      .pipe(
+        tap(data => {
+          this.branches = data.branches;
+          this.filteredBranches = data.branches;
+          this.loading = false;
+        })
+      )
+  }
+
+  filterBranches() {
+    this.filteredBranches = this.branches.filter((b) => {
+      const r = new RegExp(`^${this.branchSearch}`);
+      return r.test(b.name)
+    });
+  }
+
+  selectBranch(branch: GithubBranchModel) {
+    this.selectedBranch = branch;
+    this.branchSearch = branch.name;
+    this.logger.info("selected " + branch.name)
+    this.showBranchDropdown = false;
+  }
+
+  createBranch(branch_name: string) {
+    const repoData = this.readmeService.extractMetadataFromGithubUrl(this.repoUrl);
+    if (!repoData) return;
+
+    const { owner, repo } = repoData;
+    this.loading = true;
+    this.readmeService.createRepositoryBranch(owner, repo, branch_name)
+      .subscribe({
+        next: () => {
+          this.fetchBranches()
+            ?.subscribe({
+              next: (data) => {
+                const createdBranch = data.branches.find(b => b.name === branch_name)
+                if (createdBranch) this.selectBranch(createdBranch);
+              }
+            });
+        },
+        error: () => {
+
+        }
+      });
   }
 
   saveToGitHub() {
@@ -189,16 +345,7 @@ export class ReadmeGenerateComponent implements OnInit {
       this.showCommitMessageInput = true;
       // Provide a sensible default suggestion
       this.loading = true;
-      this.fetchBranches()?.subscribe({
-        next: (data) => {
-          this.branches = data.branches;
-          this.loading = false;
-        },
-        error: (error) => {
-          this.notificationService.error("Failed to retrieve branches");
-          this.loading = false;
-        }
-      });
+      this.fetchBranches()?.subscribe();
       this.commitMessage = this.commitMessage || 'docs: add generated README';
       return;
     }
