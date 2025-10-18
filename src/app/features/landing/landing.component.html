@@ -159,7 +159,7 @@
       <div *ngIf="!demoImageLoaded" class="demo-image-placeholder">
         <div class="demo-placeholder-text">Product Demo</div>
       </div>
-      <img #demoImg src="assets/images/one.png" alt="ReadmeAI Product Demo" class="demo-image"
+      <img #demoImg src="assets/images/demo.png" alt="ReadmeAI Product Demo" class="demo-image"
            (error)="handleDemoImageError($event)"
            (load)="demoImageLoaded = true"
            [style.display]="demoImageLoaded ? 'block' : 'none'">
