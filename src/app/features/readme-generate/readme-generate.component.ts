@@ -60,21 +60,21 @@ export class ReadmeGenerateComponent implements OnInit {
   }
 
   submitFeedback() {
-    if(!this.feedback.helpful_sections.length){
+    if (!this.feedback.helpful_sections.length) {
       this.notificationService.info("Please select one or more helpful sections.");
       return;
     }
 
-    if(!this.feedback.problematic_sections.length){
+    if (!this.feedback.problematic_sections.length) {
       this.notificationService.info("Please select one or more problematic sections.");
       return;
     }
 
-    if(!this.feedback.general_comments || (this.feedback.general_comments.length < 10)){
+    if (!this.feedback.general_comments || (this.feedback.general_comments.length < 10)) {
       this.notificationService.info("A minimum length of 10 characters is required for the general comment.");
       return;
     }
-    
+
     this.isSubmittingFeedback = true;
     this.readmeService.sendFeedBack({
       readme_history_id: this.entryId as string,
@@ -215,6 +215,12 @@ export class ReadmeGenerateComponent implements OnInit {
         this.showPreview = true;
         this.loading = false;
         this.isGenerating = false;
+
+        setTimeout(() => {
+          this.notificationService.info("Would you mind sharing some feedback about the readme?");
+          this.showFeedbackPopup = true;
+          setTimeout(() => this.isPanelOpen = true, 500)
+        }, 3000);
       },
       error: (err) => {
         this.error = 'Failed to generate README.';
@@ -236,10 +242,11 @@ export class ReadmeGenerateComponent implements OnInit {
   onReadmeEdit() {
     // This method can be used for any real-time editing logic if needed
     // For now, the two-way binding handles the content updates
-    if(!this.hasSentFeedback)
+    if (!this.hasSentFeedback)
       setTimeout(() => {
         this.notificationService.info("Looks like our generated readme wasn’t perfect. Mind sharing some feedback?")
         this.showFeedbackPopup = true;
+        setTimeout(() => this.isPanelOpen = true, 500)
       }, 1500)
   }
 
@@ -265,10 +272,11 @@ export class ReadmeGenerateComponent implements OnInit {
 
     this.downloading = false;
     this.notificationService.success('README downloaded successfully!');
-    if(!this.hasSentFeedback)
+    if (!this.hasSentFeedback)
       setTimeout(() => {
         this.notificationService.info("Thank you for using our service. Kindly drop a review")
         this.showFeedbackPopup = true;
+        setTimeout(() => this.isPanelOpen = true, 500)
       }, 2000);
   }
 
@@ -373,6 +381,13 @@ export class ReadmeGenerateComponent implements OnInit {
         this.error = null;
         this.playSuccessSound();
         this.notificationService.success('README pushed to GitHub successfully!');
+
+        if (!this.hasSentFeedback)
+          setTimeout(() => {
+            this.notificationService.info("Thank you for using our service. Kindly drop a review")
+            this.showFeedbackPopup = true;
+            setTimeout(() => this.isPanelOpen = true, 500)
+          }, 1000);
       },
       error: (err) => {
         this.error = 'Failed to save README to GitHub.';
