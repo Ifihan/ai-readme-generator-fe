@@ -220,7 +220,7 @@ export class ReadmeGenerateComponent implements OnInit {
           this.notificationService.info("Would you mind sharing some feedback about the readme?");
           this.showFeedbackPopup = true;
           setTimeout(() => this.isPanelOpen = true, 500)
-        }, 3000);
+        }, 10000);
       },
       error: (err) => {
         this.error = 'Failed to generate README.';
@@ -244,7 +244,7 @@ export class ReadmeGenerateComponent implements OnInit {
     // For now, the two-way binding handles the content updates
     if (!this.hasSentFeedback)
       setTimeout(() => {
-        this.notificationService.info("Looks like our generated readme wasn’t perfect. Mind sharing some feedback?")
+        this.notificationService.info("Looks like our generated readme wasn't perfect. Mind sharing some feedback?")
         this.showFeedbackPopup = true;
         setTimeout(() => this.isPanelOpen = true, 500)
       }, 1500)
