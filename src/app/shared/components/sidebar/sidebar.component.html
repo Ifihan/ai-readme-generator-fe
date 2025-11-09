@@ -4,7 +4,7 @@
   <div class="sidebar-header">
     <a [routerLink]="['/']" class="logo-link">
       <app-logo class="logo-image"></app-logo>
-      <span class="app-name" *ngIf="!collapsed">{{ appName }}</span>
+      <span class="app-name" *ngIf="!collapsed || isMobile">{{ appName }}</span>
     </a>
     <button class="toggle-sidebar-btn" (click)="toggle()" aria-label="Toggle sidebar">
       <span class="chevron-icon" [class.rotate]="collapsed">
@@ -23,7 +23,7 @@
           [class.active]="isActive(item.route)">
         <a [routerLink]="item.route" class="nav-link" (click)="onNavItemClick(item)">
           <div class="nav-icon" [innerHTML]="safeNavIcons[item.label]"></div>
-          <span *ngIf="!collapsed">{{ item.label }}</span>
+          <span *ngIf="!collapsed || isMobile">{{ item.label }}</span>
         </a>
       </li>
     </ul>

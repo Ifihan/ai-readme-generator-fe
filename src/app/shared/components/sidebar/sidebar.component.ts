@@ -103,7 +103,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
     // Prevent body scrolling when menu is open
     if (this.isBrowser) {
-      this.document.body.style.overflow = this.isMobileMenuOpen ? 'hidden' : '';
+      if (this.isMobileMenuOpen) {
+        this.document.body.style.overflow = 'hidden';
+        this.document.body.style.position = 'fixed';
+        this.document.body.style.width = '100%';
+      } else {
+        this.document.body.style.overflow = '';
+        this.document.body.style.position = '';
+        this.document.body.style.width = '';
+      }
     }
   }
 
@@ -113,6 +121,8 @@ export class SidebarComponent implements OnInit, OnDestroy {
 
       if (this.isBrowser) {
         this.document.body.style.overflow = '';
+        this.document.body.style.position = '';
+        this.document.body.style.width = '';
       }
     }
   }
@@ -136,9 +146,15 @@ export class SidebarComponent implements OnInit, OnDestroy {
   @HostListener('window:resize')
   checkScreenSize(): void {
     if (this.isBrowser) {
+      const wasMobile = this.isMobile;
       this.isMobile = window.innerWidth <= 768;
 
-      // Auto-collapse sidebar on small screens
+      // If switching from mobile to desktop, close mobile menu
+      if (wasMobile && !this.isMobile && this.isMobileMenuOpen) {
+        this.closeMobileMenu();
+      }
+
+      // Auto-collapse sidebar on mobile, but restore on desktop
       if (this.isMobile && !this.collapsed) {
         this.collapsed = true;
         this.collapsedChange.emit(this.collapsed);
