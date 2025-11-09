@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { GithubService } from '../../core/services/github.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
+import { LogoComponent } from '../../shared/components/logo/logo.component';
 import { forkJoin, Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 
@@ -13,17 +14,13 @@ import { Router } from '@angular/router';
   templateUrl: './landing.component.html',
   styleUrls: ['./landing.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, ThemeToggleComponent] // Add ThemeToggleComponent to imports
+  imports: [CommonModule, RouterModule, ThemeToggleComponent, LogoComponent] // Add ThemeToggleComponent to imports
 })
 export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
-  @ViewChild('logoImg') logoImg!: ElementRef;
   @ViewChild('demoImg') demoImg!: ElementRef;
-  @ViewChild('footerLogoImg') footerLogoImg!: ElementRef;
 
   // Image loading flags
-  imageLoaded = false;
   demoImageLoaded = false;
-  footerImageLoaded = false;
 
   // Mobile menu state
   mobileMenuOpen = false;
@@ -273,19 +270,9 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // Image error handlers
-  handleImageError(event: Event): void {
-    this.imageLoaded = false;
-    console.warn('Logo image failed to load');
-  }
-
   handleDemoImageError(event: Event): void {
     this.demoImageLoaded = false;
     console.warn('Demo image failed to load');
-  }
-
-  handleFooterImageError(event: Event): void {
-    this.footerImageLoaded = false;
-    console.warn('Footer logo image failed to load');
   }
 
 

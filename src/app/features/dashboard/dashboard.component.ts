@@ -26,6 +26,9 @@ interface RepositoryDisplay {
   description: string;
   private: boolean;
   html_url: string;
+  language?: string;
+  lastUpdated?: string;
+  updated_at?: string;
   initialLetter: string;
   color: string;
 }
@@ -54,6 +57,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   generatingReadmes: { [key: number]: boolean } = {};
   isBrowser: boolean;
 
+  // View and sorting options
+  viewMode: 'grid' | 'list' = 'grid';
+  sortBy: 'name' | 'updated' = 'name';
+  sortOrder: 'asc' | 'desc' = 'asc';
+
   // Navigation items for the sidebar
   navItems: NavItem[] = [
     {
@@ -73,7 +81,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // },
     {
       label: 'Settings',
-      icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><!--!Font Awesome Free v7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2025 Fonticons, Inc.--><path d="M259.1 73.5C262.1 58.7 275.2 48 290.4 48L350.2 48C365.4 48 378.5 58.7 381.5 73.5L396 143.5C410.1 149.5 423.3 157.2 435.3 166.3L503.1 143.8C517.5 139 533.3 145 540.9 158.2L570.8 210C578.4 223.2 575.7 239.8 564.3 249.9L511 297.3C511.9 304.7 512.3 312.3 512.3 320C512.3 327.7 511.8 335.3 511 342.7L564.4 390.2C575.8 400.3 578.4 417 570.9 430.1L541 481.9C533.4 495 517.6 501.1 503.2 496.3L435.4 473.8C423.3 482.9 410.1 490.5 396.1 496.6L381.7 566.5C378.6 581.4 365.5 592 350.4 592L290.6 592C275.4 592 262.3 581.3 259.3 566.5L244.9 496.6C230.8 490.6 217.7 482.9 205.6 473.8L137.5 496.3C123.1 501.1 107.3 495.1 99.7 481.9L69.8 430.1C62.2 416.9 64.9 400.3 76.3 390.2L129.7 342.7C128.8 335.3 128.4 327.7 128.4 320C128.4 312.3 128.9 304.7 129.7 297.3L76.3 249.8C64.9 239.7 62.3 223 69.8 209.9L99.7 158.1C107.3 144.9 123.1 138.9 137.5 143.7L205.3 166.2C217.4 157.1 230.6 149.5 244.6 143.4L259.1 73.5zM320.3 400C364.5 399.8 400.2 363.9 400 319.7C399.8 275.5 363.9 239.8 319.7 240C275.5 240.2 239.8 276.1 240 320.3C240.2 364.5 276.1 400.2 320.3 400z"/></svg>',
+      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2"/></svg>',
       route: ['/settings']
     }
   ];
@@ -220,6 +228,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
                 private: private_repo,
                 html_url,
                 language,
+                updated_at: updatedAt,
                 lastUpdated: this.formatDate(updatedAt),
                 initialLetter: name.charAt(0).toUpperCase(),
                 color: this.getColorForLanguage(language)
@@ -255,24 +264,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    * Filter repositories based on search query
    */
   filterRepositories(): void {
-    if (!this.searchQuery) {
-      this.filteredRepositories = [...this.repositories];
-    } else {
-      const query = this.searchQuery.toLowerCase();
-      this.filteredRepositories = this.repositories.filter(repo =>
-        repo.name.toLowerCase().includes(query) ||
-        repo.full_name.toLowerCase().includes(query) ||
-        repo.description.toLowerCase().includes(query)
-      );
-    }
-
-    // Update pagination
-    this.totalPages = Math.ceil(this.filteredRepositories.length / this.itemsPerPage) || 1;
-    this.currentPage = Math.min(this.currentPage, this.totalPages);
-    this.updateDisplayedRepositories();
-    this.generatePageNumbers();
-
-    // console.log(`Filtered repositories: ${this.filteredRepositories.length}, total pages: ${this.totalPages}`);
+    this.applySortingAndFiltering();
   }
 
   /**
@@ -280,7 +272,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   clearSearch(): void {
     this.searchQuery = '';
-    this.filterRepositories();
+    this.applySortingAndFiltering();
   }
 
   /**
@@ -292,8 +284,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       startIndex,
       startIndex + this.itemsPerPage
     );
+  }
 
-    // console.log(`Displaying repositories ${startIndex + 1} to ${startIndex + this.displayedRepositories.length}`);
+  /**
+   * Calculate pagination based on filtered repositories
+   */
+  private calculatePagination(): void {
+    this.totalPages = Math.ceil(this.filteredRepositories.length / this.itemsPerPage) || 1;
+    this.currentPage = Math.min(this.currentPage, this.totalPages);
   }
 
   /**
@@ -458,6 +456,70 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // console.log('Retrying repository loading...');
     this.hasError = false;
     this.checkAuthAndLoadRepositories();
+  }
+
+  /**
+   * Change view mode between grid and list
+   */
+  setViewMode(mode: 'grid' | 'list'): void {
+    this.viewMode = mode;
+    // Adjust items per page based on view mode
+    this.itemsPerPage = mode === 'grid' ? 6 : 10;
+    this.currentPage = 1;
+    this.calculatePagination();
+    this.updateDisplayedRepositories();
+    this.generatePageNumbers();
+  }
+
+  /**
+   * Change sorting criteria
+   */
+  setSortBy(sortBy: 'name' | 'updated'): void {
+    if (this.sortBy === sortBy) {
+      // Toggle sort order if same field
+      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortBy = sortBy;
+      this.sortOrder = 'asc';
+    }
+    this.applySortingAndFiltering();
+  }
+
+  /**
+   * Apply sorting and filtering to repositories
+   */
+  private applySortingAndFiltering(): void {
+    // First apply search filter
+    this.filteredRepositories = this.repositories.filter(repo =>
+      repo.full_name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+      (repo.description && repo.description.toLowerCase().includes(this.searchQuery.toLowerCase()))
+    );
+
+    // Then apply sorting
+    this.filteredRepositories.sort((a, b) => {
+      let comparison = 0;
+
+      switch (this.sortBy) {
+        case 'name':
+          comparison = a.full_name.localeCompare(b.full_name);
+          break;
+        case 'updated':
+          // Use updated_at if available, otherwise fall back to name
+          if (a.updated_at && b.updated_at) {
+            comparison = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+          } else {
+            comparison = a.full_name.localeCompare(b.full_name);
+          }
+          break;
+      }
+
+      return this.sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    this.currentPage = 1;
+    this.calculatePagination();
+    this.updateDisplayedRepositories();
+    this.generatePageNumbers();
   }
 
   /**

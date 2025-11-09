@@ -50,6 +50,8 @@
   width: 32px;
   height: 32px;
   border-radius: 6px;
+  /* ensure SVGs using currentColor inherit the app theme color */
+  color: var(--text-primary);
 }
 
 .logo-text {

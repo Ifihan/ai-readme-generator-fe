@@ -36,6 +36,8 @@
   width: 32px;
   height: 32px;
   margin-right: 10px;
+  /* allow external SVG to pick up currentColor when it uses currentColor */
+  color: var(--text-primary);
 }
 
 .app-name {
@@ -124,6 +126,7 @@
   align-items: center;
   justify-content: center;
   margin-right: 12px;
+  color: var(--text-secondary);
 }
 
 .nav-item.active .nav-icon {
