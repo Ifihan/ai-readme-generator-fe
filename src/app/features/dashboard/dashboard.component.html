@@ -9,7 +9,7 @@
     <!-- Main Content Area -->
     <main class="main-content">
       <header class="dashboard-header">
-        <h1 class="welcome-title">Welcome, {{userName}}!</h1>
+        <h1 class="welcome-title">{{userName}}<span class="lowercase">.md</span></h1>
 
         <!-- Only show search and connect repository when repositories exist -->
         <div class="header-actions" *ngIf="repositories && repositories.length > 0">
@@ -25,6 +25,56 @@
                   stroke-linejoin="round" />
               </svg>
             </span>
+          </div>
+
+          <!-- View and Sort Controls -->
+          <div class="view-controls">
+            <!-- View Mode Toggle -->
+            <div class="view-mode-toggle">
+              <button
+                class="view-btn"
+                [class.active]="viewMode === 'grid'"
+                (click)="setViewMode('grid')"
+                title="Grid View">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button
+                class="view-btn"
+                [class.active]="viewMode === 'list'"
+                (click)="setViewMode('list')"
+                title="List View">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <line x1="8" y1="6" x2="21" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <line x1="8" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <line x1="8" y1="18" x2="21" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <line x1="3" y1="6" x2="3.01" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <line x1="3" y1="12" x2="3.01" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <line x1="3" y1="18" x2="3.01" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Sort Dropdown -->
+            <div class="sort-dropdown">
+              <select class="sort-select" [value]="sortBy" (change)="setSortBy($any($event.target).value)">
+                <option value="name">Name</option>
+                <option value="updated">Last Updated</option>
+              </select>
+              <button
+                class="sort-order-btn"
+                (click)="setSortBy(sortBy)"
+                [title]="sortOrder === 'asc' ? 'Sort Descending' : 'Sort Ascending'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L15 8H9L12 2Z" fill="currentColor" [class.active]="sortOrder === 'asc'"/>
+                  <path d="M12 22L9 16H15L12 22Z" fill="currentColor" [class.active]="sortOrder === 'desc'"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -102,44 +152,58 @@
           <button class="secondary-btn" (click)="clearSearch()">Clear Search</button>
         </div>
 
-        <div class="repo-grid" *ngIf="displayedRepositories.length > 0">
-          <div class="repo-card" *ngFor="let repo of displayedRepositories">
+        <div class="repo-grid" *ngIf="displayedRepositories.length > 0" [class.list-view]="viewMode === 'list'">
+          <div class="repo-card" *ngFor="let repo of displayedRepositories" [class.list-item]="viewMode === 'list'">
             <div class="repo-header">
               <div class="repo-avatar" [style.background-color]="repo.color">
                 <span>{{repo.full_name.charAt(0) || 'R'}}</span>
               </div>
               <div class="repo-info">
-                <h4 class="repo-name">{{repo.full_name}}</h4>
-                <span class="repo-visibility" [class.private]="repo.private">
-                  <svg *ngIf="repo.private" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <svg *ngIf="!repo.private" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  {{repo.private ? 'Private' : 'Public'}}
-                </span>
+                <h4 class="repo-name" [title]="repo.full_name">{{repo.full_name}}</h4>
+                <div class="repo-metadata">
+                  <span class="repo-visibility" [class.private]="repo.private">
+                    <svg *ngIf="repo.private" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <svg *ngIf="!repo.private" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    {{repo.private ? 'Private' : 'Public'}}
+                  </span>
+                </div>
               </div>
             </div>
 
             <div class="repo-content">
-              <p class="repo-description" *ngIf="repo.description" [title]="repo.description">{{repo.description}}</p>
+              <p class="repo-description" *ngIf="repo.description; else noDescription" [title]="repo.description">
+                {{repo.description}}
+              </p>
+              <ng-template #noDescription>
+                <p class="repo-description no-description">No description available</p>
+              </ng-template>
             </div>
 
-                          <a class="view-repo-btn" [href]="repo.html_url" target="_blank" rel="noopener noreferrer">
+            <div class="repo-actions">
+              <a class="action-btn secondary" [href]="repo.html_url" target="_blank" rel="noopener noreferrer" title="View on GitHub">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M15 3h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   <path d="M10 14L21 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                View on GitHub
+                <span class="btn-text">View</span>
               </a>
 
-            <div class="repo-actions">
-              <button class="generate-btn" (click)="generateReadme(repo.html_url)">
-                Generate README
+              <button class="action-btn primary" (click)="generateReadme(repo.html_url)" title="Generate README for this repository">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M16 13H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M16 17H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M10 9H9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="btn-text">Generate README</span>
               </button>
             </div>
           </div>

@@ -3,15 +3,8 @@
   <!-- Logo and App Name -->
   <div class="sidebar-header">
     <a [routerLink]="['/']" class="logo-link">
-      <svg *ngIf="!imageLoaded" class="logo-image" width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-        <rect width="32" height="32" rx="6" fill="var(--primary)"/>
-        <text x="16" y="20" fill="white" text-anchor="middle" font-size="18" font-weight="bold">R</text>
-      </svg>
-      <img #logoImg [src]="logoSrc" [alt]="appName + ' Logo'" class="logo-image" 
-          (error)="handleImageError($event)" 
-          (load)="imageLoaded = true"
-          [style.display]="imageLoaded ? 'block' : 'none'">
-      <span class="app-name" *ngIf="!collapsed">{{ appName }}</span>
+      <app-logo class="logo-image"></app-logo>
+      <span class="app-name" *ngIf="!collapsed || isMobile">{{ appName }}</span>
     </a>
     <button class="toggle-sidebar-btn" (click)="toggle()" aria-label="Toggle sidebar">
       <span class="chevron-icon" [class.rotate]="collapsed">
@@ -25,12 +18,12 @@
   <!-- Navigation Menu -->
   <nav class="sidebar-nav">
     <ul class="nav-list">
-      <li *ngFor="let item of navItems" 
-          class="nav-item" 
+      <li *ngFor="let item of navItems"
+          class="nav-item"
           [class.active]="isActive(item.route)">
         <a [routerLink]="item.route" class="nav-link" (click)="onNavItemClick(item)">
           <div class="nav-icon" [innerHTML]="safeNavIcons[item.label]"></div>
-          <span *ngIf="!collapsed">{{ item.label }}</span>
+          <span *ngIf="!collapsed || isMobile">{{ item.label }}</span>
         </a>
       </li>
     </ul>
@@ -52,11 +45,11 @@
 </aside>
 
 <!-- Mobile menu toggle button (visible only on mobile) -->
-<button 
-  *ngIf="isBrowser && isMobile" 
-  class="mobile-menu-toggle" 
+<button
+  *ngIf="isBrowser && isMobile"
+  class="mobile-menu-toggle"
   [class.active]="isMobileMenuOpen"
-  (click)="toggleMobileMenu()" 
+  (click)="toggleMobileMenu()"
   aria-label="Toggle mobile menu">
   <span></span>
   <span></span>
@@ -64,8 +57,8 @@
 </button>
 
 <!-- Mobile menu backdrop overlay -->
-<div 
-  *ngIf="isBrowser && isMobile && isMobileMenuOpen" 
+<div
+  *ngIf="isBrowser && isMobile && isMobileMenuOpen"
   class="mobile-backdrop"
   (click)="closeMobileMenu()">
 </div>

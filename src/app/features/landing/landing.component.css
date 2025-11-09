@@ -36,6 +36,8 @@
   width: 32px;
   height: 32px;
   margin-right: 8px;
+  /* ensure the logo uses the theme color when the SVG uses currentColor */
+  color: var(--text-primary);
 }
 
 .logo-text {
@@ -292,6 +294,14 @@ body.menu-open {
 .stat-link:hover {
   color: var(--primary);
   background-color: var(--bg-hover);
+}
+
+.stat-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  flex-shrink: 0;
+  color: var(--text-primary);
 }
 
 .stat-count {
@@ -878,13 +888,17 @@ h1 {
 .twitter-icon,
 .linkedin-icon,
 .download-icon,
-.folder-icon {
+.folder-icon,
+.branch-icon,
+.lightbulb-icon {
   display: inline-block;
   width: 24px;
   height: 24px;
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
+  /* Make icons theme-responsive by setting color */
+  color: var(--text-primary);
 }
 
 /* Lightbulb icon instead of sparkles */
@@ -1028,14 +1042,12 @@ html {
 
 .star-icon {
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>');
-}
-
-.star-icon {
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>');
+  color: var(--text-primary) !important;
 }
 
 .fork-icon {
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v12"></path><path d="M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path><path d="M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path><path d="M18 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path><path d="M18 6v13"></path><path d="M6 9a9 9 0 0 0 9 9"></path></svg>');
+  color: var(--text-primary) !important;
 }
 
 .sun-icon {
@@ -1084,6 +1096,7 @@ html {
   background-repeat: no-repeat;
   background-position: center;
   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>');
+  color: var(--text-primary) !important;
 }
 
 /* Responsive adjustments */

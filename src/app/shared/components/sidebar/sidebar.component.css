@@ -36,6 +36,8 @@
   width: 32px;
   height: 32px;
   margin-right: 10px;
+  /* allow external SVG to pick up currentColor when it uses currentColor */
+  color: var(--text-primary);
 }
 
 .app-name {
@@ -46,22 +48,25 @@
 }
 
 .toggle-sidebar-btn {
-  background: transparent;
-  border: none;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
   color: var(--text-secondary);
   cursor: pointer;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   margin-left: 10px;
-  transition: transform 0.3s ease;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .toggle-sidebar-btn:hover {
-  color: var(--primary);
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: var(--primary);
 }
 
 .chevron-icon {
@@ -124,6 +129,7 @@
   align-items: center;
   justify-content: center;
   margin-right: 12px;
+  color: var(--text-secondary);
 }
 
 .nav-item.active .nav-icon {
@@ -162,32 +168,49 @@
 .mobile-menu-toggle {
   display: none;
   position: fixed;
-  bottom: 20px;
-  left: 20px;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
-  border: none;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  top: 20px;
+  right: 20px;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1001;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-toggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary);
+  transform: translateY(-2px);
 }
 
 .mobile-menu-toggle span {
   display: block;
-  width: 24px;
-  height: 3px;
-  background: white;
-  margin: 2px 0;
+  width: 20px;
+  height: 2px;
+  background: var(--text-primary);
+  margin: 3px 0;
   transition: all 0.3s ease;
+  border-radius: 1px;
+}
+
+.mobile-menu-toggle.active {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.mobile-menu-toggle.active span {
+  background: white;
 }
 
 .mobile-menu-toggle.active span:nth-child(1) {
-  transform: translateY(7px) rotate(45deg);
+  transform: translateY(8px) rotate(45deg);
 }
 
 .mobile-menu-toggle.active span:nth-child(2) {
@@ -195,7 +218,7 @@
 }
 
 .mobile-menu-toggle.active span:nth-child(3) {
-  transform: translateY(-7px) rotate(-45deg);
+  transform: translateY(-8px) rotate(-45deg);
 }
 
 /* Mobile Menu Backdrop */
@@ -205,8 +228,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 90;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  backdrop-filter: blur(2px);
 }
 
 /* Responsive Adjustments */
@@ -215,17 +239,41 @@
     position: fixed;
     left: 0;
     top: 0;
-    height: 100%;
+    height: 100vh;
+    width: 280px;
     transform: translateX(-100%);
-    transition: transform 0.3s ease, width 0.3s ease;
-    z-index: 101;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 200;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
   }
 
   .sidebar.show {
     transform: translateX(0);
   }
 
+  .sidebar.collapsed {
+    width: 280px; /* Override collapsed width on mobile */
+  }
+
+  /* Ensure text is always visible on mobile regardless of collapsed state */
+  .sidebar .app-name,
+  .sidebar .nav-link span {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
   .mobile-menu-toggle {
     display: flex;
+  }
+
+  /* Hide desktop toggle button on mobile */
+  .toggle-sidebar-btn {
+    display: none;
+  }
+
+  /* Adjust sidebar header for mobile */
+  .sidebar-header {
+    padding: 20px;
   }
 }
