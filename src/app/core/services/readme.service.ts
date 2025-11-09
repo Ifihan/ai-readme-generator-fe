@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { Observable, ObservableLike, throwError } from 'rxjs';
 import { catchError, tap, switchMap, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { API_ENDPOINTS, ERROR_MESSAGES } from '../constants/app.constants';
 import { NotificationService } from './notification.service';
 import { LoggerService } from './logger.service';
-import { SectionTemplate, GenerateReadmeRequest, GenerateReadmeResponse, RefineReadmeRequest, RefineReadmeResponse, SaveReadmeRequest, SaveReadmeResponse, DownloadReadmeRequest, DownloadReadmeResponse, PreviewReadmeResponse, AnalyzeRepositoryResponse, ReadmeSection } from '../models/readme.model';
-import { HistoryResponse } from '../models/history.model';
+import { SectionTemplate, GenerateReadmeRequest, GenerateReadmeResponse, RefineReadmeRequest, RefineReadmeResponse, SaveReadmeRequest, SaveReadmeResponse, DownloadReadmeRequest, DownloadReadmeResponse, PreviewReadmeResponse, AnalyzeRepositoryResponse, ReadmeSection, RepoUrlInformation, RepoBranchResponse, CreateFeedbackRequestResponse } from '../models/readme.model';
+import { HistoryEntry, HistoryResponse } from '../models/history.model';
 // Section Template Interfaces
 
 @Injectable({ providedIn: 'root' })
@@ -174,6 +174,43 @@ export class ReadmeService {
     );
   }
 
+  getRepositoryBranches(owner: string, repo: string): Observable<RepoBranchResponse> {
+    this.logger.info(`Analyzing repository ${owner}/${repo}`);
+
+    // const headers = new HttpHeaders({
+    //   'Authorization': authToken
+    // });
+
+    return this.http.get<RepoBranchResponse>(
+      `${this.API_URL}/readme/branches/${owner}/${repo}`,
+      // { headers }
+    ).pipe(
+      tap(response => {
+        this.logger.info("Successfully fetched branches");
+      }),
+      catchError(error => {
+        this.logger.error('Error analyzing repository:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  createRepositoryBranch(owner: string, repo: string, branch_name: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.API_URL}/readme/branches/${owner}/${repo}?branch_name=${branch_name}`,
+      {}
+      // { headers }
+    ).pipe(
+      tap(response => {
+        this.logger.info("Successfully created branch");
+      }),
+      catchError(error => {
+        this.logger.error('Error creating branch:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
   /**
    * Helper method to create a basic README section
    */
@@ -242,5 +279,54 @@ export class ReadmeService {
       branch: branch || 'main'
     };
     return request;
+  }
+
+  extractMetadataFromGithubUrl(github_url: string): RepoUrlInformation | null {
+    try {
+      const url = new URL(github_url);
+      if (url.hostname !== 'github.com') {
+        return null;
+      }
+      
+      const parts = url.pathname.split('/').filter(p => p);
+      if (parts.length < 2) {
+        return null;
+      }
+
+      return {
+        owner: parts[0],
+        repo: parts[1]
+      };
+      
+    } catch {
+      return null;
+    }
+  }
+
+  deleteHistoryEntry(entry: HistoryEntry) {
+    return this.http.delete<string>(`${this.API_URL}/readme/history/${entry.id}`).pipe(
+      tap(response => this.logger.info('README history entry deleted:', response)),
+      catchError(error => {
+        this.logger.error('Error fetching README history:', error);
+        this.notificationService.error('Failed to delete history entry');
+        return throwError(() => error);
+      })
+    );
+  }
+
+  sendFeedBack(request: {
+    general_comments: string
+    helpful_sections: string[]
+    problematic_sections: string[]
+    rating: string
+    readme_history_id: string
+    suggestions?: string
+  }): Observable<CreateFeedbackRequestResponse> {
+    return this.http.post<CreateFeedbackRequestResponse>(`${this.API_URL}/feedback/`, request).pipe(
+      catchError(error => {
+        this.notificationService.error('Failed to submit feedback');
+        return throwError(() => error);
+      })
+    )
   }
 }

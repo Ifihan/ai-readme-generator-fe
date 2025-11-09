@@ -6,6 +6,7 @@ import { ReadmeService } from '../../core/services/readme.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { PageLayoutComponent } from '../../shared/components/page-layout/page-layout.component';
 import { HistoryEntry, HistoryResponse } from '../../core/models/history.model';
+// import { trigger, transition, style, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-history',
@@ -45,7 +46,8 @@ export class HistoryComponent implements OnInit {
 
     this.readmeService.getReadmeHistory(this.currentPage, this.pageSize).subscribe({
       next: (response: HistoryResponse) => {
-        this.entries = response.entries;
+        this.entries = response.entries.map(e => 
+          ({ ...e, isDeletedFromView: false, isDisabled: false }));
         this.totalCount = response.total_count;
         this.totalPages = Math.ceil(this.totalCount / this.pageSize);
         this.loading = false;
@@ -96,7 +98,12 @@ export class HistoryComponent implements OnInit {
   }
 
   openRepository(url: string): void {
-    window.open(url, '_blank');
+    const fullGithubUrlRegex = /^https?:\/\/(www\.)?github\.com\/[\w.-]+\/[\w.-]+(\/)?$/i;
+    const relativeGithubRepoRegex = /^[\w.-]+\/[\w.-]+$/;
+
+    if(fullGithubUrlRegex.test(url)) window.open(url, '_blank');
+    if(relativeGithubRepoRegex.test(url)) 
+      window.open(`https://github.com/${url}`, '_blank');
   }
 
   toggleContent(entry: HistoryEntry): void {
@@ -118,5 +125,42 @@ export class HistoryComponent implements OnInit {
       .replace(/^```markdown\n/, '')
       .replace(/\n```$/, '')
       .trim();
+  }
+
+  downloadContent(content: string, repo_name: string){
+    const cleanContent = this.cleanMarkdownContent(content);
+    const blob = new Blob([cleanContent], { type: 'text/markdown' });
+    const url = window.URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `README (${repo_name}).md`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+  deleteEntry(entry: HistoryEntry){
+    const index = this.entries.findIndex(e => e.id === entry.id);
+    entry.isDisabled = true;
+    this.readmeService.deleteHistoryEntry(entry)
+    .subscribe({
+      next: (_) => {
+        entry.isDeletedFromView = true;
+        setTimeout(() => 
+          this.entries = this.entries.filter(e => e.id !== entry.id), 300
+        );
+      },
+      error: (_) => {
+        entry.isDisabled = false;
+        entry.isDeletedFromView = false;
+        this.entries[index] = entry;
+      }
+    });
+
+    return
   }
 }

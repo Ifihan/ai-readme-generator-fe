@@ -71,7 +71,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     },
     {
       label: 'History',
-      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 4V10H7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.51 15A9 9 0 1 0 6 5.3L1 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 6v6l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
       route: ['/history']
     },
     // {
@@ -527,6 +527,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
    */
   logout(): void {
     // console.log('Logging out...');
-    this.githubService.logout();
+    // this.githubService.logout();
+    this.authService.clearAuth();
   }
 }

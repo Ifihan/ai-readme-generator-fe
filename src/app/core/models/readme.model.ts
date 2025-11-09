@@ -24,6 +24,7 @@ export interface GenerateReadmeRequest {
 export interface GenerateReadmeResponse {
   content: string;
   sections_generated: string[];
+  entry_id: string
 }
 
 // README Refinement Interfaces
@@ -81,4 +82,35 @@ export interface ValidationError {
     msg: string;
     type: string;
   }>;
+}
+
+export interface RepoUrlInformation {
+  owner: string
+  repo: string
+}
+
+export interface GithubBranchModel {
+  name: string,
+  sha: string,
+  protected: boolean,
+  is_default: boolean
+}
+
+export interface RepoBranchResponse {
+  repository: string,
+  branches: GithubBranchModel[];
+  total_count: number;
+}
+
+export interface CreateFeedbackRequestResponse {
+  created_at: string;
+  general_comments: string;
+  helpful_sections: string[];
+  id: string;
+  problematic_sections: string[];
+  rating: string;
+  readme_history_id: string;
+  repository_name: string;
+  suggestions: string;
+  username: string;
 }

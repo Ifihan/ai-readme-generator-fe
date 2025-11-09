@@ -34,8 +34,25 @@
       </div>
 
       <div *ngIf="entries.length > 0" class="history-list">
-        <div *ngFor="let entry of entries" class="history-card">
-          <div class="card-header">
+        <div *ngFor="let entry of entries" class="history-card" 
+          [ngClass]="{'removing': entry.isDeletedFromView}"
+          [ngStyle]="{'opacity': entry.isDisabled ? 0.3 : 1}"
+        >
+          <div class="card-header" style="position: relative;">
+            <!-- Delete Button -->
+            <button
+              class="delete-btn"
+              (click)="deleteEntry(entry)"
+              type="button"
+              title="Delete entry"
+              style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; cursor: pointer; padding: 0;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <rect x="5" y="6" width="14" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+                <path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
             <div class="repo-info">
               <div class="repo-title">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="repo-icon">
@@ -55,9 +72,9 @@
               </a>
             </div>
             
-            <div class="type-badge" [class.badge-new]="entry.generation_type === 'new'" [class.badge-update]="entry.generation_type === 'update'">
+            <!-- <div class="type-badge" [class.badge-new]="entry.generation_type === 'new'" [class.badge-update]="entry.generation_type === 'update'">
               {{ entry.generation_type === 'new' ? 'New' : 'Update' }}
-            </div>
+            </div> -->
           </div>
 
           <div class="card-body">
@@ -103,13 +120,24 @@
               </div>
             </div>
             
-            <button class="view-content-btn" (click)="toggleContent(entry)" type="button">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              {{ entry.showContent ? 'Hide' : 'View' }} Content
-            </button>
+            <div>
+              <button class="view-content-btn" (click)="toggleContent(entry)" type="button" style="margin-right: 10px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {{ entry.showContent ? 'Hide' : 'View' }} Content
+              </button>
+
+              <button class="view-content-btn" (click)="downloadContent(entry.content, entry.repository_name)" type="button">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Download README
+              </button>
+            </div>
           </div>
           
           <div class="content-preview" *ngIf="entry.showContent">

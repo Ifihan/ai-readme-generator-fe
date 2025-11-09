@@ -1,41 +1,86 @@
 <app-page-layout [showBackButton]="true">
   <div class="readme-generate-wrapper" [class.success-bg]="pushSuccess">
-
     <!-- Form Section (hidden when preview is shown) -->
     <div *ngIf="!showPreview">
       <h2>Generate README for Repository</h2>
       <p class="repo-url">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
         <span>{{ repoUrl }}</span>
       </p>
 
       <div *ngIf="loading" class="loading-message">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="animate-spin">
-          <path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93"
-            stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          class="animate-spin"
+        >
+          <path
+            d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
         </svg>
         <span *ngIf="isGenerating">Generating README...</span>
         <span *ngIf="!isGenerating">Loading section templates...</span>
       </div>
 
       <div *ngIf="error" class="error">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-            stroke="currentColor" stroke-width="2"/>
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 8v5M12 16h.01"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+            stroke="currentColor"
+            stroke-width="2"
+          />
         </svg>
         {{ error }}
       </div>
 
-  <form *ngIf="!loading && (sectionTemplates?.length || 0)" (ngSubmit)="generateReadme()">
+      <form
+        *ngIf="!loading && (sectionTemplates?.length || 0)"
+        (ngSubmit)="generateReadme()"
+      >
         <div class="sections-container">
           <h3>Select Sections</h3>
           <div class="sections-list">
-            <label *ngFor="let section of sectionTemplates" class="section-item">
-              <input type="checkbox" [checked]="isSelected(section)" (change)="toggleSection(section)">
+            <label
+              *ngFor="let section of sectionTemplates"
+              class="section-item"
+            >
+              <input
+                type="checkbox"
+                [checked]="isSelected(section)"
+                (change)="toggleSection(section)"
+              />
               <div class="section-content">
                 <span class="section-name">{{ section.name }}</span>
                 <span class="section-desc">{{ section.description }}</span>
@@ -46,18 +91,27 @@
 
         <div class="options">
           <label>
-            <input type="checkbox" [(ngModel)]="includeBadges" name="includeBadges">
+            <input
+              type="checkbox"
+              [(ngModel)]="includeBadges"
+              name="includeBadges"
+            />
             Include Repository Badges
           </label>
           <label>
             Badge Style:
             <select [(ngModel)]="badgeStyle" name="badgeStyle">
-              <option *ngFor="let style of badgeStyles" [value]="style">{{ formatBadgeStyle(style) }}</option>
+              <option *ngFor="let style of badgeStyles" [value]="style">
+                {{ formatBadgeStyle(style) }}
+              </option>
             </select>
           </label>
         </div>
 
-        <button type="submit" [disabled]="selectedSections.length === 0 || loading">
+        <button
+          type="submit"
+          [disabled]="selectedSections.length === 0 || loading"
+        >
           <span *ngIf="!loading">Generate README</span>
           <span *ngIf="loading">Generating...</span>
         </button>
@@ -65,11 +119,13 @@
     </div>
 
     <!-- Success Section -->
-  <div *ngIf="pushSuccess" class="success-section">
+    <div *ngIf="pushSuccess" class="success-section">
       <div class="success-card">
-    <!-- Background celebration is applied to wrapper; keep header concise -->
+        <!-- Background celebration is applied to wrapper; keep header concise -->
         <h2>README pushed successfully!</h2>
-        <p>Your README has been pushed to your repository on the main branch.</p>
+        <p>
+          Your README has been pushed to your repository on the main branch.
+        </p>
         <button type="button" class="btn-primary" (click)="goToDashboard()">
           Go to Dashboard
         </button>
@@ -81,8 +137,20 @@
       <div class="preview-header">
         <h2>Generated README Preview</h2>
         <button type="button" class="back-button" (click)="backToForm()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M19 12H5M12 19l-7-7 7-7"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
           Back to Form
         </button>
@@ -90,17 +158,32 @@
 
       <div class="repo-info">
         <p class="repo-url">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
           <span>{{ repoUrl }}</span>
         </p>
 
-  <div class="sections-included" *ngIf="sectionsIncluded?.length">
+        <div class="sections-included" *ngIf="sectionsIncluded?.length">
           <h4>Sections Included:</h4>
           <div class="section-tags">
-            <span *ngFor="let section of sectionsIncluded" class="section-tag">{{ section }}</span>
+            <span
+              *ngFor="let section of sectionsIncluded"
+              class="section-tag"
+              >{{ section }}</span
+            >
           </div>
         </div>
       </div>
@@ -113,45 +196,323 @@
           [minHeight]="'400px'"
           placeholder="Edit your README content here..."
           (contentChanged)="onReadmeEdit()"
-          (resetRequested)="onResetRequested()">
+          (resetRequested)="onResetRequested()"
+        >
         </app-markdown-editor>
       </div>
 
-  <div class="preview-actions">
+      <div class="preview-actions">
         <div *ngIf="showCommitMessageInput" class="commit-message-field">
           <label for="commitMessage">Commit Message</label>
-          <input id="commitMessage" type="text" [(ngModel)]="commitMessage" name="commitMessage" maxlength="120" placeholder="e.g. docs: add generated README" />
-          <small class="hint">Keep it concise (≤ 72 chars recommended). You can edit before pushing.</small>
+          <input
+            id="commitMessage"
+            type="text"
+            [(ngModel)]="commitMessage"
+            name="commitMessage"
+            maxlength="120"
+            placeholder="e.g. docs: add generated README"
+          />
+          <small class="hint"
+            >Keep it concise (≤ 72 chars recommended). You can edit before
+            pushing.</small
+          >
         </div>
-        <button type="button" class="btn-primary" (click)="downloadReadme()" [disabled]="downloading">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" [class.animate-spin]="downloading">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <span *ngIf="!downloading">Download README</span>
-          <span *ngIf="downloading">Downloading...</span>
-        </button>
 
-        <button type="button" class="btn-github" (click)="saveToGitHub()" [disabled]="saving || (showCommitMessageInput && !commitMessage.trim())">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" [class.animate-spin]="saving">
-            <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
-              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span *ngIf="!saving && !showCommitMessageInput">Push to GitHub</span>
-          <span *ngIf="!saving && showCommitMessageInput">Confirm Push</span>
-          <span *ngIf="saving">Pushing...</span>
-        </button>
+        <!-- add branch select input here -->
+        <div
+          class="branch-select-field commit-message-field"
+          *ngIf="branches.length"
+        >
+          <label for="branchSearch">Target Branch</label>
+
+          <div class="branch-select-wrapper">
+            <input
+              type="text"
+              id="branchSearch"
+              [(ngModel)]="branchSearch"
+              (input)="filterBranches()"
+              (focus)="showBranchDropdown = true"
+              placeholder="Search or create a branch"
+              class="branch-search-input"
+            />
+
+            <ul *ngIf="showBranchDropdown" class="branch-dropdown">
+              <li
+                *ngFor="let branch of filteredBranches"
+                (click)="selectBranch(branch)"
+                class="branch-option"
+              >
+                {{ branch.name }}
+              </li>
+              <li
+                *ngIf="!filteredBranches.length && branchSearch"
+                class="branch-create"
+                (click)="createBranch(branchSearch)"
+                [ngStyle]="{'pointer-events': loading ? 'none' : 'initial'}"
+              >
+                ➕ Create new branch "{{ branchSearch }}"
+              </li>
+            </ul>
+          </div>
+
+          <small class="hint"
+            >Select or create the branch where you want to push the
+            README</small
+          >
+        </div>
+
+        <div>
+          <button
+            type="button"
+            class="btn-primary"
+            (click)="downloadReadme()"
+            [disabled]="downloading"
+            style="margin-right: 10px"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              [class.animate-spin]="downloading"
+            >
+              <path
+                d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <polyline
+                points="7,10 12,15 17,10"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <line
+                x1="12"
+                y1="15"
+                x2="12"
+                y2="3"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+            <span *ngIf="!downloading">Download README</span>
+            <span *ngIf="downloading">Downloading...</span>
+          </button>
+
+          <button
+            type="button"
+            class="btn-github"
+            (click)="saveToGitHub()"
+            [disabled]="
+              saving ||
+              (showCommitMessageInput && !commitMessage.trim()) ||
+              loading || (!selectedBranch && branches.length)
+            "
+            [title]="
+              saving ? 'Currently pushing changes...' :
+              loading ? 'Please wait while loading...' :
+              !selectedBranch && branches.length ? 'Please select a target branch first' :
+              (showCommitMessageInput && !commitMessage.trim()) ? 'Please enter a commit message' :
+              'Push changes to GitHub repository'
+            "
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              [class.animate-spin]="saving"
+            >
+              <path
+                d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span *ngIf="!saving && !showCommitMessageInput"
+              >Push to GitHub</span
+            >
+            <span *ngIf="!saving && showCommitMessageInput">Confirm Push</span>
+            <span *ngIf="saving">Pushing...</span>
+          </button>
+        </div>
       </div>
 
-  <div *ngIf="error" class="error">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
-            stroke="currentColor" stroke-width="2"/>
+      <div *ngIf="error" class="error">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 8v5M12 16h.01"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
+            stroke="currentColor"
+            stroke-width="2"
+          />
         </svg>
         {{ error }}
       </div>
     </div>
   </div>
+  
+  <!-- Feedback Chat Component -->
+<div class="feedback-chat" [class.show]="isPanelOpen" *ngIf="showFeedbackPopup && !hasSentFeedback">
+  <button 
+    class="feedback-button"
+    [class.active]="isPanelOpen"
+    (click)="togglePanel()">
+    <svg 
+      class="wave-icon"
+      width="20" 
+      height="20" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      xmlns="http://www.w3.org/2000/svg">
+      <path 
+        d="M5.5 11C5.5 8.79086 7.29086 7 9.5 7C10.9659 7 12.2096 7.85119 12.7669 9.08762C13.1711 8.41539 13.8846 7.95 14.7 7.95C16.2464 7.95 17.5 9.20355 17.5 10.75C17.5 11.0642 17.4595 11.3688 17.3845 11.6584C18.3236 11.9857 19 12.8743 19 13.925C19 15.2657 17.9254 16.35 16.6 16.35H8C6.067 16.35 4.5 14.783 4.5 12.85C4.5 11.0737 5.82014 9.61869 7.53846 9.38538" 
+        stroke="currentColor" 
+        stroke-width="2" 
+        stroke-linecap="round" 
+        stroke-linejoin="round"/>
+    </svg>
+    <span>Feedback</span>
+  </button>
+
+  <div class="feedback-panel">
+    <div class="feedback-header">
+      <h3>Share Your Feedback</h3>
+      <button class="close-button" (click)="togglePanel()">×</button>
+    </div>
+    
+    <div class="feedback-content">
+      <form (submit)="submitFeedback()">
+        
+        <!-- General Comments -->
+        <div class="form-group">
+          <label for="general-comments">General Comments</label>
+          <textarea
+            id="general-comments"
+            [(ngModel)]="feedback.general_comments"
+            name="general_comments"
+            placeholder="Share your overall thoughts about the README..."
+            rows="3">
+          </textarea>
+        </div>
+
+        <!-- Rating -->
+        <div class="form-group">
+          <label>Overall Rating</label>
+          <div class="rating-buttons">
+            <button 
+              type="button"
+              class="rating-btn"
+              [class.active]="feedback.rating === 'excellent'"
+              (click)="feedback.rating = 'excellent'">
+              Excellent
+            </button>
+            <button 
+              type="button"
+              class="rating-btn"
+              [class.active]="feedback.rating === 'good'"
+              (click)="feedback.rating = 'good'">
+              Good
+            </button>
+            <button 
+              type="button"
+              class="rating-btn"
+              [class.active]="feedback.rating === 'average'"
+              (click)="feedback.rating = 'average'">
+              Average
+            </button>
+            <button 
+              type="button"
+              class="rating-btn"
+              [class.active]="feedback.rating === 'poor'"
+              (click)="feedback.rating = 'poor'">
+              Poor
+            </button>
+          </div>
+        </div>
+
+        <!-- Helpful Sections -->
+        <div class="form-group">
+          <label>Helpful Sections (Optional)</label>
+          <div class="section-tags">
+            <span
+              *ngFor="let section of sectionsIncluded"
+              class="section-tag select"
+              [ngClass]="
+                {'active': feedback.helpful_sections.includes(section)}
+              "
+              (click)="toggleFeedbackSection('helpful', section)"
+              >{{ section }}</span
+            >
+          </div>
+        </div>
+
+        <!-- Problematic Sections -->
+        <div class="form-group">
+          <label>Sections Needing Improvement (Optional)</label>
+          <div class="section-tags">
+            <span
+              *ngFor="let section of sectionsIncluded"
+              class="section-tag select"
+              [ngClass]="
+                {'active': feedback.problematic_sections.includes(section)}
+              "
+              (click)="toggleFeedbackSection('problematic', section)"
+              >{{ section }}</span
+            >
+          </div>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="form-group">
+          <label for="suggestions">Suggestions (Optional)</label>
+          <textarea
+            id="suggestions"
+            [(ngModel)]="feedback.suggestions"
+            name="suggestions"
+            placeholder="What would make this README better?"
+            rows="3">
+          </textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <button 
+          type="submit"
+          class="submit-feedback"
+          [disabled]="isSubmittingFeedback || !feedback.general_comments">
+          <span *ngIf="!isSubmittingFeedback">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Send Feedback
+          </span>
+          <span *ngIf="isSubmittingFeedback">
+            <span class="spinner"></span>
+            Sending...
+          </span>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
 </app-page-layout>
