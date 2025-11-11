@@ -129,7 +129,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionInboundMessage, sender: 
         return;
       }
 
-      const cached = await ensureRepositories(tokens.accessToken);
+      const cached = await ensureRepositories(tokens.accessToken, true);
       sendResponse({
         tokens,
         repositories: cached?.repositories,

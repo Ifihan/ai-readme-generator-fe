@@ -5,11 +5,12 @@ const GITHUB_HOST = "github.com";
 const API_BASE_URL = "https://ai-readme-generator-be-912048666815.us-central1.run.app";
 // Frontend host used during the OAuth completion step (where tokens land in localStorage).
 const FRONTEND_HOST_URL = "https://ai-readme-generator-912048666815.us-central1.run.app";
+const REPOSITORIES_STORAGE_KEY = "userRepositories";
 let pendingAuthTabId = null;
 let pendingAuthWindowId = null;
 chrome.runtime.onInstalled.addListener(async () => {
     // Ensure we start with a clean slate if previous builds stored legacy keys.
-    const keysToRemove = ["legacyAuthToken"];
+    const keysToRemove = ["legacyAuthToken", REPOSITORIES_STORAGE_KEY];
     if (keysToRemove.length > 0) {
         await chrome.storage.local.remove(keysToRemove);
     }
@@ -82,9 +83,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return undefined;
     }
     if (message.type === "GET_AUTH_STATUS") {
-        void getStoredTokens().then((tokens) => {
-            sendResponse({ tokens });
-        });
+        void (async () => {
+            const tokens = await getStoredTokens();
+            if (!tokens) {
+                sendResponse({ tokens: undefined });
+                return;
+            }
+            const cached = await ensureRepositories(tokens.accessToken, true);
+            sendResponse({
+                tokens,
+                repositories: cached?.repositories,
+                totalCount: cached?.totalCount
+            });
+        })();
         return true;
     }
     if (message.type === "START_AUTH") {
@@ -157,6 +168,7 @@ async function startAuthFlow() {
         });
         const token = await Promise.race([tokenPromise, windowClosedPromise]);
         await setStoredTokens({ accessToken: token });
+        await ensureRepositories(token, true);
     }
     finally {
         if (onUpdatedListener)
@@ -260,6 +272,55 @@ async function getStoredTokens() {
 }
 async function setStoredTokens(tokens) {
     await chrome.storage.local.set({ authTokens: tokens });
+}
+async function ensureRepositories(accessToken, forceRefresh = false) {
+    const cached = await getStoredRepositories();
+    if (!forceRefresh && cached && Array.isArray(cached.repositories) && cached.repositories.length > 0) {
+        return cached;
+    }
+    try {
+        const fetched = await fetchRepositoriesFromApi(accessToken);
+        if (!fetched.repositories) {
+            return cached;
+        }
+        const stored = {
+            repositories: fetched.repositories,
+            totalCount: fetched.totalCount,
+            fetchedAt: Date.now()
+        };
+        await setStoredRepositories(stored);
+        return stored;
+    }
+    catch (error) {
+        console.error("README AI extension: failed to fetch repositories", error);
+        return cached;
+    }
+}
+async function fetchRepositoriesFromApi(accessToken) {
+    const requestUrl = new URL("/api/v1/auth/repositories", API_BASE_URL).toString();
+    const res = await fetch(requestUrl, {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+        }
+    });
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Repositories endpoint failed: ${res.status}. Response: ${errorText}`);
+    }
+    const json = (await res.json());
+    return {
+        repositories: json.repositories ?? [],
+        totalCount: json.total_count
+    };
+}
+async function getStoredRepositories() {
+    const stored = await chrome.storage.local.get(REPOSITORIES_STORAGE_KEY);
+    return stored[REPOSITORIES_STORAGE_KEY];
+}
+async function setStoredRepositories(payload) {
+    await chrome.storage.local.set({ [REPOSITORIES_STORAGE_KEY]: payload });
 }
 async function broadcastAuthSuccess() {
     await broadcastToGithubTabs({ type: "AUTH_SUCCESS" });

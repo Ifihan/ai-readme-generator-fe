@@ -6,9 +6,13 @@ const CTA_DEFAULT_LABEL = "Try README AI";
 const CTA_LOADING_LABEL = "Opening…";
 const CTA_SUCCESS_LABEL = "Connected to README AI";
 const CTA_ERROR_LABEL = "We could not connect. Try again.";
+const REPO_CTA_CONTAINER_ID = "readme-ai-repo-cta";
+const REPO_STORAGE_KEY = "readme-ai.repositories";
 let ctaButton;
 let ctaMessage;
 let hideTimeout;
+let repoCtaContainer;
+let repoCtaButton;
 if (document.readyState === "loading") {
     window.addEventListener("DOMContentLoaded", handleInitialLoad, { once: true });
 }
@@ -25,9 +29,11 @@ chrome.runtime.onMessage.addListener((message) => {
             break;
         case "AUTH_SUCCESS":
             showSuccessState();
+            void evaluateAuthState("runtime-message");
             break;
         case "AUTH_FAILURE":
             showErrorState(message.error);
+            removeRepoCta();
             break;
         default:
             break;
@@ -58,12 +64,17 @@ async function handleInitialLoad() {
     await evaluateAuthState("initial-load");
 }
 async function evaluateAuthState(trigger) {
-    const tokens = await requestAuthStatus();
+    const status = await requestAuthStatus();
+    const tokens = status?.tokens;
+    const repositories = status?.repositories;
     if (tokens) {
         removeCta();
+        persistRepositoriesToLocalStorage(repositories);
+        maybeShowRepositoryCta(repositories);
     }
     else if (document.body) {
         ensureCta();
+        removeRepoCta();
     }
     else if (trigger === "initial-load") {
         // The DOM is still booting; retry shortly.
@@ -80,7 +91,7 @@ async function requestAuthStatus() {
                 resolve(undefined);
                 return;
             }
-            resolve(response?.tokens);
+            resolve(response);
         });
     });
 }
@@ -159,6 +170,111 @@ function removeCta() {
     ctaButton = undefined;
     ctaMessage = undefined;
 }
+function persistRepositoriesToLocalStorage(repositories) {
+    if (!repositories || repositories.length === 0) {
+        try {
+            window.localStorage.removeItem(REPO_STORAGE_KEY);
+        }
+        catch {
+            // ignore storage removal errors
+        }
+        return;
+    }
+    try {
+        window.localStorage.setItem(REPO_STORAGE_KEY, JSON.stringify(repositories));
+    }
+    catch (error) {
+        console.debug("README AI extension: failed to persist repositories to localStorage", error);
+    }
+}
+function loadRepositoriesFromLocalStorage() {
+    try {
+        const raw = window.localStorage.getItem(REPO_STORAGE_KEY);
+        if (!raw)
+            return undefined;
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed))
+            return undefined;
+        return parsed;
+    }
+    catch {
+        return undefined;
+    }
+}
+function maybeShowRepositoryCta(repositories) {
+    const repoList = repositories && repositories.length > 0 ? repositories : loadRepositoriesFromLocalStorage();
+    if (!repoList || repoList.length === 0) {
+        removeRepoCta();
+        return;
+    }
+    const currentUrl = normalizeRepoUrl(window.location.href);
+    const match = repoList.find(repo => normalizeRepoUrl(repo.html_url) === currentUrl);
+    if (match) {
+        ensureRepoCta(match);
+    }
+    else {
+        removeRepoCta();
+    }
+}
+function ensureRepoCta(repo) {
+    let container = repoCtaContainer ?? document.getElementById(REPO_CTA_CONTAINER_ID);
+    if (!container) {
+        container = document.createElement("div");
+        container.id = REPO_CTA_CONTAINER_ID;
+        container.className = "readme-ai-cta readme-ai-cta--repo";
+        try {
+            const html = document.documentElement;
+            const colorMode = html.getAttribute("data-color-mode") || html.getAttribute("data-theme");
+            const isDark = (colorMode || "").toLowerCase().includes("dark") || document.body.classList.contains("dark");
+            if (isDark) {
+                container.setAttribute("data-theme", "dark");
+            }
+        }
+        catch {
+            // ignore theme detection errors
+        }
+        const heading = document.createElement("span");
+        heading.className = "readme-ai-cta__heading";
+        heading.textContent = "README AI";
+        const description = document.createElement("p");
+        description.className = "readme-ai-cta__description";
+        description.textContent = "This repository is connected to README AI.";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "readme-ai-cta__button";
+        repoCtaButton = button;
+        container.append(heading, description, button);
+        repoCtaContainer = container;
+        document.body?.appendChild(container);
+    }
+    if (!repoCtaContainer) {
+        repoCtaContainer = container ?? undefined;
+    }
+    const buttonLabel = `Generate README for ${repo.name}`;
+    if (repoCtaButton) {
+        repoCtaButton.textContent = buttonLabel;
+        repoCtaButton.onclick = () => {
+            console.log(`[README AI] Generate README requested for ${repo.full_name}`);
+        };
+    }
+}
+function removeRepoCta() {
+    if (repoCtaContainer?.parentElement) {
+        repoCtaContainer.parentElement.removeChild(repoCtaContainer);
+    }
+    repoCtaContainer = undefined;
+    repoCtaButton = undefined;
+}
+function normalizeRepoUrl(value) {
+    try {
+        const parsed = new URL(value, window.location.origin);
+        const normalizedPath = parsed.pathname.replace(/\/$/, "");
+        return `${parsed.origin}${normalizedPath}`.toLowerCase();
+    }
+    catch {
+        return value.trim().replace(/\/$/, "").toLowerCase();
+    }
+}
 function showSuccessState() {
     setCtaState("success");
     hideTimeout = window.setTimeout(() => {
@@ -208,7 +324,7 @@ function ensureCtaStyles() {
     const style = document.createElement("style");
     style.id = CTA_STYLE_ID;
     style.textContent = `
-    #${CTA_CONTAINER_ID} {
+    .readme-ai-cta {
       position: fixed;
       bottom: 24px;
       right: 24px;
@@ -226,13 +342,13 @@ function ensureCtaStyles() {
       border: 1px solid var(--border);
       backdrop-filter: blur(12px);
     }
-    #${CTA_CONTAINER_ID}[data-theme="dark"] {
+    .readme-ai-cta[data-theme="dark"] {
       background: var(--bg-secondary);
       color: var(--text-primary);
       border-color: var(--border);
     }
     /* Inject app theme variables locally (light) */
-    #${CTA_CONTAINER_ID} {
+    .readme-ai-cta {
       --bg-primary: #fafbfc;
       --bg-secondary: #ffffff;
       --text-primary: #1a1a1a;
@@ -246,7 +362,7 @@ function ensureCtaStyles() {
       --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
     }
     /* Dark mode variable overrides */
-    #${CTA_CONTAINER_ID}[data-theme="dark"] {
+    .readme-ai-cta[data-theme="dark"] {
       --bg-primary: #0d1117;
       --bg-secondary: #161b22;
       --text-primary: #e6edf3;
@@ -282,7 +398,7 @@ function ensureCtaStyles() {
       transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
       box-shadow: var(--shadow-sm);
     }
-    #${CTA_CONTAINER_ID}[data-theme="dark"] .readme-ai-cta__button { color: #ffffff; background: var(--primary); }
+    .readme-ai-cta[data-theme="dark"] .readme-ai-cta__button { color: #ffffff; background: var(--primary); }
     .readme-ai-cta__button:hover:not(:disabled) {
       background: var(--primary-hover);
       transform: translateY(-1px);
