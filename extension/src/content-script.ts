@@ -1,44 +1,44 @@
 /// <reference types="chrome" />
+/// <reference path="./shared/constants.ts" />
 
-const CTA_CONTAINER_ID = "readme-ai-cta-container";
-const CTA_STYLE_ID = "readme-ai-cta-style";
-const CTA_DEFAULT_LABEL = "Try README AI";
-const CTA_LOADING_LABEL = "Opening…";
-const CTA_SUCCESS_LABEL = "Connected to README AI";
-const CTA_ERROR_LABEL = "We could not connect. Try again.";
-const REPO_CTA_CONTAINER_ID = "readme-ai-repo-cta";
-const REPO_STORAGE_KEY = "readme-ai.repositories";
+const {
+  cta: {
+    containerId: CTA_CONTAINER_ID,
+    styleId: CTA_STYLE_ID,
+    repoContainerId: REPO_CTA_CONTAINER_ID,
+    labels: {
+      default: CTA_DEFAULT_LABEL,
+      loading: CTA_LOADING_LABEL,
+      success: CTA_SUCCESS_LABEL,
+      error: CTA_ERROR_LABEL
+    }
+  },
+  storage: { repoListLocalKey: REPO_STORAGE_KEY },
+  messages: MESSAGE_DEFINITIONS
+} = ReadmeConstants;
 
-interface AuthTokens {
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt?: number;
-}
+const {
+  toBackground: MESSAGE_TO_BACKGROUND,
+  broadcast: MESSAGE_BROADCAST
+} = MESSAGE_DEFINITIONS;
 
-interface UserRepository {
-  id: number;
-  name: string;
-  full_name: string;
-  html_url: string;
-  description: string | null;
-  private: boolean;
-}
+const {
+  getAuthStatus: MSG_GET_AUTH_STATUS,
+  startAuth: MSG_START_AUTH,
+  showSidePanelForRepo: MSG_SHOW_SIDE_PANEL_FOR_REPO,
+  fetchReadmeTemplates: MSG_FETCH_README_TEMPLATES,
+  generateReadme: MSG_GENERATE_README,
+  saveReadme: MSG_SAVE_README,
+  fetchBranches: MSG_FETCH_BRANCHES,
+  createBranch: MSG_CREATE_BRANCH,
+  getPendingRepo: MSG_GET_PENDING_REPO
+} = MESSAGE_TO_BACKGROUND;
 
-interface AuthStatusResponse {
-  tokens?: AuthTokens;
-  repositories?: UserRepository[];
-  totalCount?: number;
-}
-
-interface AuthStartResponse {
-  ok: boolean;
-  error?: string;
-}
-
-type BackgroundMessage =
-  | { type: "CHECK_AUTH" }
-  | { type: "AUTH_SUCCESS" }
-  | { type: "AUTH_FAILURE"; error?: string };
+const {
+  checkAuth: MSG_CHECK_AUTH,
+  authSuccess: MSG_AUTH_SUCCESS,
+  authFailure: MSG_AUTH_FAILURE
+} = MESSAGE_BROADCAST;
 
 let ctaButton: HTMLButtonElement | undefined;
 let ctaMessage: HTMLParagraphElement | undefined;
@@ -52,7 +52,7 @@ async function openReadmePanel(repo: UserRepository): Promise<void> {
   try {
     // 1. Tell the background to save the repo and show the panel
     await chrome.runtime.sendMessage({
-      type: "SHOW_SIDE_PANEL_FOR_REPO",
+      type: MSG_SHOW_SIDE_PANEL_FOR_REPO,
       payload: { repo }
     });
   } catch (e) {
@@ -68,12 +68,12 @@ if (document.readyState === "loading") {
 
 chrome.runtime.onMessage.addListener((message: BackgroundMessage) => {
   if (!message || typeof message.type !== "string") return undefined;
-  if (message.type === "CHECK_AUTH") {
+  if (message.type === MSG_CHECK_AUTH) {
     void evaluateAuthState("runtime-message");
-  } else if (message.type === "AUTH_SUCCESS") {
+  } else if (message.type === MSG_AUTH_SUCCESS) {
     setCtaState("success");
     void evaluateAuthState("runtime-message");
-  } else if (message.type === "AUTH_FAILURE") {
+  } else if (message.type === MSG_AUTH_FAILURE) {
     setCtaState("error", message.error);
     removeRepoCta();
   }
@@ -86,11 +86,11 @@ window.addEventListener("message", (event: MessageEvent) => {
   if (event.source !== window) return;
   const data = event.data as { source?: string; type?: string; payload?: unknown } | undefined;
   if (!data || data.source !== "readme-ai") return;
-  if (data.type === "CHECK_AUTH") {
+  if (data.type === MSG_CHECK_AUTH) {
     void evaluateAuthState("runtime-message");
-  } else if (data.type === "AUTH_SUCCESS") {
+  } else if (data.type === MSG_AUTH_SUCCESS) {
     setCtaState("success");
-  } else if (data.type === "AUTH_FAILURE") {
+  } else if (data.type === MSG_AUTH_FAILURE) {
     setCtaState("error", typeof data.payload === "string" ? data.payload : undefined);
   }
 });
@@ -119,7 +119,7 @@ async function evaluateAuthState(trigger: "initial-load" | "runtime-message"): P
 // Background auth status helper
 async function requestAuthStatus(): Promise<AuthStatusResponse | undefined> {
   return new Promise<AuthStatusResponse | undefined>((resolve) => {
-    chrome.runtime.sendMessage({ type: "GET_AUTH_STATUS" }, (response?: AuthStatusResponse) => {
+    chrome.runtime.sendMessage({ type: MSG_GET_AUTH_STATUS }, (response?: AuthStatusResponse) => {
       if (chrome.runtime.lastError) {
         resolve(undefined);
         return;
@@ -134,7 +134,7 @@ async function startAuthFromContent(): Promise<void> {
   setCtaState("loading");
   try {
     await new Promise<void>((resolve, reject) => {
-      chrome.runtime.sendMessage({ type: "START_AUTH" }, (response?: AuthStartResponse) => {
+      chrome.runtime.sendMessage({ type: MSG_START_AUTH }, (response?: AuthStartResponse) => {
         if (chrome.runtime.lastError) {
           reject(new Error(chrome.runtime.lastError.message));
           return;
@@ -390,14 +390,6 @@ function normalizeRepoUrl(value: string): string {
   }
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 function showSuccessState(): void {
   setCtaState("success");

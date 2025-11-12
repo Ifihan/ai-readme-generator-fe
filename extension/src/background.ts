@@ -1,119 +1,59 @@
 /// <reference types="chrome" />
 
-const GITHUB_HOST = "github.com";
-const API_BASE_URL = "https://ai-readme-generator-be-912048666815.us-central1.run.app";
-const FRONTEND_HOST_URL = "https://ai-readme-generator-912048666815.us-central1.run.app";
-const REPOSITORIES_STORAGE_KEY = "userRepositories";
+// IMPORTANT: include .js extension so MV3 service worker can resolve the compiled file.
+import { ReadmeConstants } from "./shared/constants.js";
+
+const {
+  hosts: {
+    github: GITHUB_HOST,
+    apiBaseUrl: API_BASE_URL,
+    frontendBaseUrl: FRONTEND_HOST_URL
+  },
+  storage: { repositoriesKey: REPOSITORIES_STORAGE_KEY },
+  contextMenuIds: MENU_IDS,
+  messages: MESSAGE_DEFINITIONS
+} = ReadmeConstants;
+
+const {
+  login: MENU_ID_LOGIN,
+  logout: MENU_ID_LOGOUT,
+  dashboard: MENU_ID_DASHBOARD,
+  history: MENU_ID_HISTORY,
+  settings: MENU_ID_SETTINGS,
+  separator: MENU_ID_SEPARATOR
+} = MENU_IDS;
+
+const {
+  toBackground: MESSAGE_TO_BACKGROUND,
+  broadcast: BROADCAST_MESSAGES
+} = MESSAGE_DEFINITIONS;
+
+const {
+  getAuthStatus: MSG_GET_AUTH_STATUS,
+  startAuth: MSG_START_AUTH,
+  showSidePanelForRepo: MSG_SHOW_SIDE_PANEL_FOR_REPO,
+  getPendingRepo: MSG_GET_PENDING_REPO,
+  fetchReadmeTemplates: MSG_FETCH_README_TEMPLATES,
+  generateReadme: MSG_GENERATE_README,
+  saveReadme: MSG_SAVE_README,
+  fetchBranches: MSG_FETCH_BRANCHES,
+  createBranch: MSG_CREATE_BRANCH
+} = MESSAGE_TO_BACKGROUND;
+
+const {
+  checkAuth: MSG_CHECK_AUTH,
+  authSuccess: MSG_AUTH_SUCCESS,
+  authFailure: MSG_AUTH_FAILURE
+} = BROADCAST_MESSAGES;
 
 // --- State for the side panel handshake ---
 let pendingReadmeRepo: UserRepository | null = null;
 
-// (Keep all your interfaces: AuthTokens, UserRepository, etc.)
-// ...
-
-interface AuthTokens {
-  accessToken: string;
-  refreshToken?: string;
-  expiresAt?: number;
-}
-interface UserRepository {
-  id: number;
-  name: string;
-  full_name: string;
-  html_url: string;
-  description: string | null;
-  private: boolean;
-}
-interface StoredRepositories {
-  repositories: UserRepository[];
-  totalCount?: number;
-  fetchedAt: number;
-}
-type ExtensionInboundMessage =
-  | { type: "GET_AUTH_STATUS" }
-  | { type: "START_AUTH" }
-  | { type: "SHOW_SIDE_PANEL_FOR_REPO"; payload: { repo: UserRepository } }
-  | { type: "SIDE_PANEL_READY" } // <-- New message from the side panel
-  | { type: "GET_PENDING_REPO" } // <-- New message from the side panel
-  | { type: "FETCH_README_TEMPLATES" }
-  | { type: "GENERATE_README"; payload: GenerateReadmeRequestPayload }
-  | { type: "SAVE_README"; payload: SaveReadmeRequestPayload }
-  | { type: "FETCH_BRANCHES"; payload: { repository_url: string } }
-  | { type: "CREATE_BRANCH"; payload: { repository_url: string; branch_name: string } };
-
-// (Keep all other interfaces)
-// ...
-interface AuthStatusResponse {
-  tokens?: AuthTokens;
-  repositories?: UserRepository[];
-  totalCount?: number;
-}
-interface SectionTemplate {
-  id: string;
-  name: string;
-  description: string;
-  is_default: boolean;
-  order: number;
-}
-interface GenerateReadmeRequestPayload {
-  repository_url: string;
-  sections: GenerateReadmeSectionPayload[];
-  include_badges: boolean;
-  badge_style: string;
-}
-interface GenerateReadmeSectionPayload {
-  name: string;
-  description: string;
-  required: boolean;
-  order: number;
-}
-interface SaveReadmeRequestPayload {
-  repository_url: string;
-  content: string;
-  path: string;
-  commit_message: string;
-  branch: string;
-}
-interface GenerateReadmeResponsePayload {
-  content: string;
-  sections_generated: string[];
-  entry_id: string;
-}
-interface SaveReadmeResponsePayload {
-  message: string;
-}
-interface GithubBranchModel {
-  name: string;
-  sha: string;
-  protected: boolean;
-  is_default: boolean;
-}
-interface RepoBranchResponse {
-  repository: string;
-  branches: GithubBranchModel[];
-  total_count: number;
-}
-interface GenericBackgroundResponse<T = unknown> {
-  ok: boolean;
-  data?: T;
-  error?: string;
-}
-interface AuthStartResponse {
-  ok: boolean;
-  error?: string;
-}
-
-
 let pendingAuthTabId: number | null = null;
 let pendingAuthWindowId: number | null = null;
 
-// --- Context menu identifiers ---
-const MENU_ID_LOGIN = "readme-ai-login";
-const MENU_ID_LOGOUT = "readme-ai-logout";
-const MENU_ID_DASHBOARD = "readme-ai-dashboard";
-const MENU_ID_HISTORY = "readme-ai-history";
-const MENU_ID_SETTINGS = "readme-ai-settings";
-const MENU_ID_SEPARATOR = "readme-ai-separator";
+// --- MODIFICATION: Added cache duration ---
+const REPO_CACHE_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 
 chrome.runtime.onInstalled.addListener(async () => {
   const keysToRemove = ["legacyAuthToken", REPOSITORIES_STORAGE_KEY];
@@ -247,7 +187,7 @@ async function handleContextMenuLogin(): Promise<void> {
     await updateContextMenuVisibility(false);
     const errorMessage = error instanceof Error ? error.message : String(error);
     console.error("README AI extension: auth flow failed from context menu", errorMessage);
-    await broadcastToGithubTabs({ type: "AUTH_FAILURE", error: errorMessage });
+    await broadcastToGithubTabs({ type: MSG_AUTH_FAILURE, error: errorMessage });
   }
 }
 
@@ -258,7 +198,7 @@ async function handleContextMenuLogout(): Promise<void> {
   }
   pendingReadmeRepo = null;
   await updateContextMenuVisibility(false);
-  await broadcastToGithubTabs({ type: "AUTH_FAILURE", error: "You have been logged out." });
+  await broadcastToGithubTabs({ type: MSG_AUTH_FAILURE, error: "You have been logged out." });
 }
 
 void (async () => {
@@ -311,9 +251,10 @@ async function sendCheckAuthWithRetry(tabId: number, maxAttempts = 5, initialDel
         await chrome.scripting.executeScript({
           target: { tabId },
           world: "MAIN",
-          func: () => {
-            window.postMessage({ source: "readme-ai", type: "CHECK_AUTH" }, "*");
-          }
+          func: (messageType: string) => {
+            window.postMessage({ source: "readme-ai", type: messageType }, "*");
+          },
+          args: [MSG_CHECK_AUTH]
         });
       } catch { /* ignore */ }
       return;
@@ -324,7 +265,7 @@ async function sendCheckAuthWithRetry(tabId: number, maxAttempts = 5, initialDel
 
 function sendCheckAuthOnce(tabId: number): Promise<boolean> {
   return new Promise((resolve) => {
-    chrome.tabs.sendMessage(tabId, { type: "CHECK_AUTH" }, () => {
+    chrome.tabs.sendMessage(tabId, { type: MSG_CHECK_AUTH }, () => {
       const err = chrome.runtime.lastError;
       resolve(!err);
     });
@@ -336,7 +277,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionInboundMessage, sender: 
     return undefined;
   }
 
-  if (message.type === "GET_AUTH_STATUS") {
+  if (message.type === MSG_GET_AUTH_STATUS) {
     void (async () => {
       const tokens = await getStoredTokens();
       await updateContextMenuVisibility(!!tokens);
@@ -344,7 +285,8 @@ chrome.runtime.onMessage.addListener((message: ExtensionInboundMessage, sender: 
         sendResponse({ tokens: undefined } satisfies AuthStatusResponse);
         return;
       }
-      const cached = await ensureRepositories(tokens.accessToken, true);
+      // --- MODIFICATION: Changed forceRefresh to false ---
+      const cached = await ensureRepositories(tokens.accessToken, false);
       sendResponse({
         tokens,
         repositories: cached?.repositories,
@@ -354,7 +296,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionInboundMessage, sender: 
     return true;
   }
 
-  if (message.type === "START_AUTH") {
+  if (message.type === MSG_START_AUTH) {
     void startAuthFlow()
       .then(async () => {
         await updateContextMenuVisibility(true);
@@ -364,7 +306,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionInboundMessage, sender: 
       .catch((error: unknown) => {
         const errorMessage = error instanceof Error ? error.message : "Unknown error";
         console.error("README AI extension: auth flow failed", errorMessage);
-        void broadcastToGithubTabs({ type: "AUTH_FAILURE", error: errorMessage });
+        void broadcastToGithubTabs({ type: MSG_AUTH_FAILURE, error: errorMessage });
         void updateContextMenuVisibility(false);
         sendResponse({ ok: false, error: errorMessage } satisfies AuthStartResponse);
       });
@@ -372,7 +314,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionInboundMessage, sender: 
   }
 
   // --- UPDATED HANDLER ---
-  if (message.type === "SHOW_SIDE_PANEL_FOR_REPO") {
+  if (message.type === MSG_SHOW_SIDE_PANEL_FOR_REPO) {
     void (async () => {
       const tabId = sender.tab?.id;
       if (tabId) {
@@ -387,7 +329,7 @@ chrome.runtime.onMessage.addListener((message: ExtensionInboundMessage, sender: 
   }
 
   // --- NEW HANDLER ---
-  if (message.type === "GET_PENDING_REPO") {
+  if (message.type === MSG_GET_PENDING_REPO) {
     // The side panel is ready and asking for the repo
     if (pendingReadmeRepo) {
       sendResponse({ ok: true, data: { repo: pendingReadmeRepo } });
@@ -399,27 +341,27 @@ chrome.runtime.onMessage.addListener((message: ExtensionInboundMessage, sender: 
   }
   // --- END NEW HANDLER ---
 
-  if (message.type === "FETCH_README_TEMPLATES") {
+  if (message.type === MSG_FETCH_README_TEMPLATES) {
     void handleFetchReadmeTemplates(sendResponse);
     return true;
   }
 
-  if (message.type === "GENERATE_README") {
+  if (message.type === MSG_GENERATE_README) {
     void handleGenerateReadme(message.payload, sendResponse);
     return true;
   }
 
-  if (message.type === "SAVE_README") {
+  if (message.type === MSG_SAVE_README) {
     void handleSaveReadme(message.payload, sendResponse);
     return true;
   }
 
-  if (message.type === "FETCH_BRANCHES") {
+  if (message.type === MSG_FETCH_BRANCHES) {
     void handleFetchBranches(message.payload.repository_url, sendResponse);
     return true;
   }
 
-  if (message.type === "CREATE_BRANCH") {
+  if (message.type === MSG_CREATE_BRANCH) {
     void handleCreateBranch(message.payload.repository_url, message.payload.branch_name, sendResponse);
     return true;
   }
@@ -645,6 +587,7 @@ async function startAuthFlow(): Promise<void> {
     });
     const token = await Promise.race([tokenPromise, windowClosedPromise]);
     await setStoredTokens({ accessToken: token });
+    // --- MODIFICATION: Set forceRefresh to true after login ---
     await ensureRepositories(token, true);
   } finally {
     if (onUpdatedListener) chrome.tabs.onUpdated.removeListener(onUpdatedListener);
@@ -726,28 +669,42 @@ async function getStoredTokens(): Promise<AuthTokens | undefined> {
 async function setStoredTokens(tokens: AuthTokens): Promise<void> {
   await chrome.storage.local.set({ authTokens: tokens });
 }
+
+// --- MODIFICATION: Updated function to use time-based cache ---
 async function ensureRepositories(accessToken: string, forceRefresh = false): Promise<StoredRepositories | undefined> {
   const cached = await getStoredRepositories();
-  if (!forceRefresh && cached && Array.isArray(cached.repositories) && cached.repositories.length > 0) {
+
+  // 1. Check if we should use the cache
+  if (
+    !forceRefresh &&
+    cached &&
+    Array.isArray(cached.repositories) &&
+    cached.repositories.length > 0 &&
+    (Date.now() - cached.fetchedAt < REPO_CACHE_DURATION_MS) // Check if cache is fresh
+  ) {
     return cached;
   }
+
+  // 2. If no (or stale) cache, or if forced, fetch new data
   try {
     const fetched = await fetchRepositoriesFromApi(accessToken);
     if (!fetched.repositories) {
-      return cached;
+      return cached; // Return old cache if fetch failed
     }
+
     const stored: StoredRepositories = {
       repositories: fetched.repositories,
       totalCount: fetched.totalCount,
-      fetchedAt: Date.now()
+      fetchedAt: Date.now() // Set new timestamp
     };
     await setStoredRepositories(stored);
     return stored;
   } catch (error) {
     console.error("README AI extension: failed to fetch repositories", error);
-    return cached;
+    return cached; // Return old cache on error
   }
 }
+
 async function fetchRepositoriesFromApi(accessToken: string): Promise<{ repositories?: UserRepository[]; totalCount?: number; }> {
   const requestUrl = new URL("/api/v1/auth/repositories", API_BASE_URL).toString();
   const res = await fetch(requestUrl, {
@@ -775,7 +732,7 @@ async function setStoredRepositories(payload: StoredRepositories): Promise<void>
   await chrome.storage.local.set({ [REPOSITORIES_STORAGE_KEY]: payload });
 }
 async function broadcastAuthSuccess(): Promise<void> {
-  await broadcastToGithubTabs({ type: "AUTH_SUCCESS" });
+  await broadcastToGithubTabs({ type: MSG_AUTH_SUCCESS });
 }
 async function broadcastToGithubTabs(message: unknown): Promise<void> {
   const tabs = await chrome.tabs.query({ url: "https://github.com/*" });
