@@ -3,7 +3,7 @@
   "name": "README AI Helper",
   "description": "Surface README AI entry points on GitHub and manage authentication.",
   "version": "0.1.0",
-  "permissions": ["storage", "scripting", "tabs", "sidePanel"],
+  "permissions": ["storage", "scripting", "tabs", "sidePanel", "contextMenus"],
   "host_permissions": [
     "https://github.com/*",
     "https://api.github.com/*",

@@ -6,104 +6,762 @@
     <title>README AI</title>
     <style>
       :root {
-        --bg: #0d1117;
-        --panel: #161b22;
-        --text: #e6edf3;
-        --muted: #8b949e;
-        --primary: #a855f7;
-        --primary-hover: #c084fc;
-        --border: #30363d;
+        --bg-primary: #fafbfc;
+        --bg-secondary: #ffffff;
+        --bg-card: #ffffff;
+        --bg-hover: #f6f8fa;
+        --text-primary: #1a1a1a;
+        --text-secondary: #586069;
+        --text-tertiary: #8b949e;
+        --primary: #8a2be2;
+        --primary-hover: #7928ca;
+        --primary-light: #a855f7;
+        --border: #e1e4e8;
+        --border-light: #f1f3f4;
+        --border-strong: #d0d7de;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+        --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+        --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+        --success: #2ea043;
+        --error: #f85149;
+        --warning: #fb8500;
+        --info: #0969da;
+        --spacing-xs: 4px;
+        --spacing-sm: 8px;
+        --spacing-md: 16px;
+        --spacing-lg: 24px;
+        --spacing-xl: 32px;
+        --radius-sm: 6px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
       }
-      * { box-sizing: border-box; }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg-primary: #0d1117;
+          --bg-secondary: #161b22;
+          --bg-card: #21262d;
+          --bg-hover: #30363d;
+          --text-primary: #e6edf3;
+          --text-secondary: #8b949e;
+          --text-tertiary: #656d76;
+          --primary: #a855f7;
+          --primary-hover: #c084fc;
+          --primary-light: #d8b4fe;
+          --border: #30363d;
+          --border-light: #21262d;
+          --border-strong: #484f58;
+          --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+          --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+          --shadow-lg: 0 8px 24px rgba(0,0,0,0.6);
+          --success: #3fb950;
+          --error: #f85149;
+          --warning: #d29922;
+          --info: #58a6ff;
+        }
+      }
+
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
       body {
-        margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-        background: var(--bg); color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.5;
+        overflow-x: hidden;
       }
-      header { padding: 16px; border-bottom: 1px solid var(--border); background: var(--panel); }
-      header h1 { margin: 0 0 6px; font-size: 16px; }
-      header p { margin: 0; color: var(--muted); font-size: 12px; }
-      #status-message { padding: 10px 16px; font-size: 12px; color: var(--muted); }
-      main { padding: 12px 16px 80px; display: flex; flex-direction: column; gap: 12px; }
-      section.block { border: 1px solid var(--border); border-radius: 8px; background: var(--panel); padding: 12px; }
-      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-      .row > * { flex: 0 0 auto; }
-      #sections-container { display: grid; grid-template-columns: 1fr; gap: 8px; }
-      .section-item { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
-      .section-item p { margin: 0; font-size: 12px; color: var(--muted); }
-      .actions { display: flex; gap: 8px; }
-      button { border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-weight: 600; background: var(--primary); color: #fff; cursor: pointer; }
-      button:disabled { opacity: .6; cursor: default; }
-      button.secondary { background: transparent; color: var(--text); }
-      textarea { width: 100%; min-height: 280px; background: #0b0f15; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 12px; resize: vertical; }
-      select, input[type="text"], input[type="search"] { background: #0b0f15; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; }
-      footer.sticky { position: sticky; bottom: 0; background: var(--panel); padding: 12px 16px; border-top: 1px solid var(--border); }
-      .small { font-size: 12px; color: var(--muted); }
+
+      /* Header */
+      header {
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border);
+        padding: 20px 24px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(8px);
+      }
+
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+
+      .header-logo {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+        filter: drop-shadow(0 2px 4px rgba(138, 43, 226, 0.2));
+        animation: logoFloat 3s ease-in-out infinite;
+      }
+
+      @keyframes logoFloat {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-2px); }
+      }
+
+      header h1 {
+        font-size: 20px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary) 0%, #0969da 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin: 0;
+      }
+
+      header .repo-url {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--text-secondary);
+        background: var(--bg-card);
+        padding: 6px 12px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+      }
+
+      /* Status Messages */
+      .status {
+        margin: 16px 24px;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      .status.info {
+        background: rgba(9, 105, 218, 0.1);
+        border: 1px solid rgba(9, 105, 218, 0.2);
+        color: var(--info);
+      }
+
+      .status.success {
+        background: rgba(46, 160, 67, 0.1);
+        border: 1px solid rgba(46, 160, 67, 0.2);
+        color: var(--success);
+      }
+
+      .status.error {
+        background: rgba(248, 81, 73, 0.1);
+        border: 1px solid rgba(248, 81, 73, 0.2);
+        color: var(--error);
+      }
+
+      .status svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+      }
+
+      /* Main Content */
+      main {
+        padding: 24px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      /* Sections */
+      .content-section {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 24px;
+        box-shadow: var(--shadow-sm);
+        transition: all 0.2s ease;
+        animation: fadeIn 0.4s ease-out;
+      }
+
+      .content-section:hover {
+        box-shadow: var(--shadow-md);
+      }
+
+      .section-header {
+        padding: 24px 24px 16px;
+        border-bottom: 1px solid var(--border-light);
+      }
+
+      .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+
+      .section-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+
+      .section-content {
+        padding: 20px 24px 24px;
+      }
+
+      /* Section Selection */
+      .sections-grid {
+        display: grid;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .section-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg-card);
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+
+      .section-item:hover {
+        border-color: var(--primary-light);
+        background: var(--bg-hover);
+      }
+
+      .section-item input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        margin-top: 2px;
+        accent-color: var(--primary);
+      }
+
+      .section-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .section-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .section-description {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.4;
+      }
+
+      /* Controls */
+      .controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+
+      .control-group {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .checkbox-control {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--text-secondary);
+      }
+
+      .checkbox-control input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--primary);
+      }
+
+      select {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 14px;
+        color: var(--text-primary);
+        min-width: 120px;
+      }
+
+      select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.1);
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: var(--primary-hover);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+      }
+
+      .btn-secondary {
+        background: transparent;
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+        border-color: var(--primary-light);
+      }
+
+      .btn-tertiary {
+        background: transparent;
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+
+      .btn-tertiary:hover:not(:disabled) {
+        background: var(--bg-hover);
+        border-color: var(--border-strong);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      .btn svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      /* Result Section */
+      .result-content {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+
+      .sections-summary {
+        padding: 12px 16px;
+        background: var(--bg-hover);
+        border-bottom: 1px solid var(--border);
+        border-radius: 8px 8px 0 0;
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+
+      .editor-container {
+        position: relative;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 320px;
+        background: var(--bg-card);
+        border: none;
+        border-radius: 0 0 8px 8px;
+        padding: 16px;
+        font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--text-primary);
+        resize: vertical;
+      }
+
+      textarea:focus {
+        outline: none;
+        box-shadow: inset 0 0 0 2px var(--primary);
+      }
+
+      /* Actions */
+      .action-bar {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+      }
+
+      /* Form Fields */
+      .form-field {
+        margin-bottom: 20px;
+      }
+
+      .form-field label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+      }
+
+      .form-field input[type="text"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 14px;
+      }
+
+      .form-field input[type="text"]:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.1);
+      }
+
+      .form-hint {
+        font-size: 12px;
+        color: var(--text-tertiary);
+        margin-top: 4px;
+      }
+
+      /* Branch Controls */
+      .branch-controls {
+        display: flex;
+        gap: 8px;
+        align-items: stretch;
+      }
+
+      .branch-controls select {
+        flex: 1;
+        min-width: 150px;
+      }
+
+      .branch-controls input {
+        flex: 1;
+        min-width: 120px;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 14px;
+      }
+
+      /* Animations */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      .spinning {
+        animation: spin 1s linear infinite;
+      }
+
+      /* Utility Classes */
       .hidden { display: none !important; }
+      .loading { opacity: 0.6; pointer-events: none; }
+
+      /* Footer */
+      footer {
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border);
+        padding: 16px 24px;
+        text-align: center;
+        font-size: 13px;
+        color: var(--text-tertiary);
+        position: sticky;
+        bottom: 0;
+        backdrop-filter: blur(8px);
+      }
+
+      /* Success Section */
+      .success-content {
+        text-align: center;
+        padding: var(--spacing-lg);
+        animation: fadeInUp 0.6s ease-out;
+      }
+
+      .celebration-container {
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .celebration-gif {
+        width: 120px;
+        height: 120px;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+      }
+
+      .success-message {
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .success-message p {
+        margin: 0 0 var(--spacing-sm);
+        color: var(--text-primary);
+        font-size: 16px;
+        line-height: 1.5;
+      }
+
+      .success-details {
+        color: var(--text-secondary);
+        font-size: 14px;
+        font-style: italic;
+      }
+
+      .success-actions {
+        display: flex;
+        gap: var(--spacing-md);
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .success-actions .btn {
+        min-width: 180px;
+      }
+
+      /* Animations */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 600px) {
+        main { padding: 16px; }
+        .content-section { margin-bottom: 16px; }
+        .section-header, .section-content { padding: 16px; }
+        .controls { flex-direction: column; align-items: stretch; }
+        .action-bar { flex-direction: column; }
+        .branch-controls { flex-direction: column; }
+      }
     </style>
   </head>
   <body>
     <header>
-      <h1>README AI</h1>
-      <p id="repo-name" class="small">Loading repository…</p>
+      <div class="header-content">
+        <svg class="header-logo" viewBox="0 0 220 180" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="README AI logo">
+          <defs>
+            <style>
+              .logo-icon { fill: none; stroke: currentColor; stroke-width: 3; }
+              .logo-text { fill: currentColor; font-family: monospace; font-weight: bold; text-anchor: middle; }
+              .logo-subtext { fill: currentColor; font-family: monospace; text-anchor: middle; opacity: 0.85; }
+            </style>
+          </defs>
+          <path class="logo-icon" d="M40,20 H140 L180,60 V160 H40 Z"/>
+          <polyline class="logo-icon" points="140,20 140,60 180,60"/>
+          <text class="logo-text" x="110" y="90" font-size="36">AI</text>
+          <text class="logo-subtext" x="110" y="130" font-size="16">readme.md</text>
+        </svg>
+        <h1>README AI</h1>
+      </div>
+      <div id="repo-name" class="repo-url">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Loading repository…</span>
+      </div>
     </header>
 
-    <div id="status-message" role="status"></div>
+    <div id="status-message" class="status hidden" role="status">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      <span></span>
+    </div>
 
     <main>
-      <section id="sections-block" class="block">
-        <div class="row" style="justify-content: space-between;">
-          <strong>Sections</strong>
-          <div class="row">
-            <label class="row" style="gap:6px;">
-              <input type="checkbox" id="include-badges" checked />
-              <span class="small">Include badges</span>
-            </label>
-            <label>
-              <select id="badge-style">
-                <option value="flat">flat</option>
-                <option value="plastic">plastic</option>
-                <option value="flat-square">flat-square</option>
-                <option value="for-the-badge">for-the-badge</option>
-                <option value="social">social</option>
-              </select>
-            </label>
-            <button id="generate-button">Generate</button>
+      <!-- Section Selection -->
+      <div id="sections-block" class="content-section">
+        <div class="section-header">
+          <h2 class="section-title">Choose README Sections</h2>
+          <p class="section-subtitle">Select the sections you want to include in your README</p>
+        </div>
+        <div class="section-content">
+          <div class="controls">
+            <div class="control-group">
+              <label class="checkbox-control">
+                <input type="checkbox" id="include-badges" checked />
+                <span>Include badges</span>
+              </label>
+              <label>
+                <select id="badge-style">
+                  <option value="flat">Flat</option>
+                  <option value="plastic">Plastic</option>
+                  <option value="flat-square">Flat Square</option>
+                  <option value="for-the-badge">For The Badge</option>
+                  <option value="social">Social</option>
+                </select>
+              </label>
+            </div>
+            <button id="generate-button" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
+              </svg>
+              Generate README
+            </button>
+          </div>
+          <div id="sections-container" class="sections-grid"></div>
+        </div>
+      </div>
+
+      <!-- Result Section -->
+      <div id="result-section" class="content-section hidden">
+        <div class="section-header">
+          <h2 class="section-title">Generated README</h2>
+          <div id="sections-summary" class="section-subtitle"></div>
+        </div>
+        <div class="section-content">
+          <div class="result-content">
+            <div id="editor-summary" class="sections-summary hidden"></div>
+            <div class="editor-container">
+              <textarea id="editor" placeholder="Your README will appear here…"></textarea>
+            </div>
+          </div>
+          <div class="action-bar">
+            <button id="edit-sections-button" class="btn btn-tertiary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Edit Sections
+            </button>
+            <button id="copy-button" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Copy
+            </button>
+            <button id="download-button" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Download
+            </button>
+            <button id="save-button" class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Save to Repo
+            </button>
           </div>
         </div>
-        <div id="sections-container"></div>
-      </section>
+      </div>
 
-      <section id="result-section" class="block hidden">
-        <p id="sections-summary" class="small"></p>
-        <textarea id="editor" placeholder="Your README will appear here…"></textarea>
-        <div class="actions">
-          <button id="copy-button" class="secondary">Copy</button>
-          <button id="download-button" class="secondary">Download</button>
-          <button id="save-button">Save to GitHub</button>
+      <!-- Commit Settings -->
+      <div id="commit-block" class="content-section hidden">
+        <div class="section-header">
+          <h2 class="section-title">Commit Settings</h2>
+          <p class="section-subtitle">Configure your commit details</p>
         </div>
-      </section>
-
-      <section id="commit-block" class="block hidden">
-        <div class="row">
-          <label class="row" style="gap:6px;">
-            <span class="small">Commit message</span>
+        <div class="section-content">
+          <div class="form-field">
+            <label for="commit-input">Commit Message</label>
             <input id="commit-input" type="text" placeholder="docs: add generated README" />
-          </label>
+            <div class="form-hint">Keep it concise and descriptive</div>
+          </div>
         </div>
-      </section>
+      </div>
 
-      <section id="branch-block" class="block hidden">
-        <p id="branch-status" class="small">Select a branch</p>
-        <div class="row">
-          <select id="branch-select"></select>
-          <input id="branch-create-input" type="text" placeholder="new-branch-name" />
-          <button id="branch-create-button" class="secondary">Create branch</button>
+      <!-- Branch Selection -->
+      <div id="branch-block" class="content-section hidden">
+        <div class="section-header">
+          <h2 class="section-title">Target Branch</h2>
+          <div id="branch-status" class="section-subtitle">Select or create a branch</div>
         </div>
-      </section>
+        <div class="section-content">
+          <div class="branch-controls">
+            <select id="branch-select">
+              <option value="">Select branch...</option>
+            </select>
+            <input id="branch-create-input" type="text" placeholder="new-branch-name" />
+            <button id="branch-create-button" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              Create
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Success Section -->
+      <div id="success-section" class="content-section hidden">
+        <div class="section-header">
+          <h2 class="section-title">Success! 🎉</h2>
+          <p class="section-subtitle">Your README has been saved to the repository</p>
+        </div>
+        <div class="section-content">
+          <div class="success-content">
+            <div class="celebration-container">
+              <img id="celebration-gif" src="assets/celebration.gif" alt="Celebration!" class="celebration-gif" />
+            </div>
+            <div class="success-message">
+              <p>Your README.md file has been successfully committed to the repository!</p>
+              <p id="commit-success-details" class="success-details"></p>
+            </div>
+            <div class="success-actions">
+              <button id="refresh-page-button" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Refresh Page to See Changes
+              </button>
+              <button id="start-over-button" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Start Over
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
 
-    <footer class="sticky small">
-      Tip: Update the sections and regenerate as needed before saving.
+    <footer>
+      <p>💡 Tip: Customize the sections and regenerate as needed before saving to your repo</p>
     </footer>
 
     <script src="sidebar.js" defer></script>

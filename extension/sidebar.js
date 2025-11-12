@@ -39,6 +39,7 @@ let commitMessage = "docs: add generated README";
 let repoNameEl,
   statusEl,
   sectionsContainerEl,
+  sectionsBlockEl,
   includeBadgesEl,
   badgeStyleEl,
   generateButtonEl,
@@ -48,13 +49,18 @@ let repoNameEl,
   copyButtonEl,
   downloadButtonEl,
   saveButtonEl,
+  editSectionsButtonEl,
   commitInputEl,
   branchStatusEl,
   branchSelectEl,
   branchCreateInputEl,
   branchCreateButtonEl,
   commitBlockEl,
-  branchBlockEl;
+  branchBlockEl,
+  successSectionEl,
+  commitSuccessDetailsEl,
+  refreshPageButtonEl,
+  startOverButtonEl;
 
 // ---- Init ----
 document.addEventListener("DOMContentLoaded", async () => {
@@ -62,6 +68,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   repoNameEl = document.getElementById("repo-name");
   statusEl = document.getElementById("status-message");
   sectionsContainerEl = document.getElementById("sections-container");
+  sectionsBlockEl = document.getElementById("sections-block");
   includeBadgesEl = document.getElementById("include-badges");
   badgeStyleEl = document.getElementById("badge-style");
   generateButtonEl = document.getElementById("generate-button");
@@ -71,6 +78,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   copyButtonEl = document.getElementById("copy-button");
   downloadButtonEl = document.getElementById("download-button");
   saveButtonEl = document.getElementById("save-button");
+  editSectionsButtonEl = document.getElementById("edit-sections-button");
   commitInputEl = document.getElementById("commit-input");
   branchStatusEl = document.getElementById("branch-status");
   branchSelectEl = document.getElementById("branch-select");
@@ -78,6 +86,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   branchCreateButtonEl = document.getElementById("branch-create-button");
   commitBlockEl = document.getElementById("commit-block");
   branchBlockEl = document.getElementById("branch-block");
+  successSectionEl = document.getElementById("success-section");
+  commitSuccessDetailsEl = document.getElementById("commit-success-details");
+  refreshPageButtonEl = document.getElementById("refresh-page-button");
+  startOverButtonEl = document.getElementById("start-over-button");
 
   try {
     // --- THIS IS THE NEW HANDSHAKE ---
@@ -115,6 +127,7 @@ function initializePanel() {
   copyButtonEl.addEventListener("click", handleCopyClick);
   downloadButtonEl.addEventListener("click", handleDownloadClick);
   saveButtonEl.addEventListener("click", handleSaveClick);
+  editSectionsButtonEl.addEventListener("click", handleEditSectionsClick);
   commitInputEl.addEventListener("input", () => {
     commitMessage = commitInputEl.value || "docs: add generated README";
   });
@@ -124,6 +137,8 @@ function initializePanel() {
       await handleCreateBranch(name);
     }
   });
+  refreshPageButtonEl.addEventListener("click", handleRefreshPageClick);
+  startOverButtonEl.addEventListener("click", handleStartOverClick);
 
   // Load initial data
   fetchTemplates();
@@ -145,9 +160,18 @@ function updateResultView() {
   if (!resultSectionEl || !editorEl || !sectionsSummaryEl) return;
   const hasContent = !!editableReadme;
   resultSectionEl.classList.toggle("hidden", !hasContent);
-  sectionsSummaryEl.textContent = sectionsGenerated.length
-    ? `Sections: ${sectionsGenerated.join(", ")}`
-    : "";
+
+  // Update sections summary with better formatting
+  if (sectionsGenerated.length > 0) {
+    sectionsSummaryEl.textContent = `Generated ${
+      sectionsGenerated.length
+    } sections: ${sectionsGenerated.join(", ")}`;
+  } else if (hasContent) {
+    sectionsSummaryEl.textContent = "README successfully generated";
+  } else {
+    sectionsSummaryEl.textContent = "";
+  }
+
   editorEl.value = editableReadme;
 }
 
@@ -239,6 +263,10 @@ async function handleGenerateClick() {
     sectionsGenerated = (result && result.sections_generated) || [];
     entryId = (result && result.entry_id) || null;
     editableReadme = generatedReadme;
+
+    // Hide the sections selection after successful generation
+    sectionsBlockEl.classList.add("hidden");
+
     updateResultView();
     commitBlockEl.classList.remove("hidden");
     branchBlockEl.classList.remove("hidden");
@@ -276,6 +304,21 @@ async function handleCopyClick() {
   }
 }
 
+function handleEditSectionsClick() {
+  // Show the sections block again and hide commit/branch blocks
+  if (sectionsBlockEl) {
+    sectionsBlockEl.classList.remove("hidden");
+  }
+  if (commitBlockEl) {
+    commitBlockEl.classList.add("hidden");
+  }
+  if (branchBlockEl) {
+    branchBlockEl.classList.add("hidden");
+  }
+  // Keep the result section visible so users can see their previous generation
+  setStatus("Edit your section selection and regenerate if needed.", "info");
+}
+
 async function handleSaveClick() {
   if (!currentRepo || isSaving) return;
   const branch =
@@ -291,9 +334,11 @@ async function handleSaveClick() {
   try {
     isSaving = true;
     saveButtonEl.disabled = true;
-    setStatus("Saving to GitHub…");
+    setStatus("Saving to repository…");
     await sendBackgroundMessage({ type: "SAVE_README", payload });
-    setStatus("Saved to GitHub.", "success");
+
+    // Show success section instead of just status
+    showSuccessSection(branch, commitMessage);
   } catch (e) {
     setStatus(e.message || "Failed to save", "error");
   } finally {
@@ -359,4 +404,55 @@ async function handleCreateBranch(name) {
   } catch (e) {
     branchStatusEl.textContent = e.message || "Failed to create branch";
   }
+}
+
+function showSuccessSection(branch, commitMessage) {
+  // Hide all other sections
+  if (sectionsBlockEl) sectionsBlockEl.classList.add("hidden");
+  if (resultSectionEl) resultSectionEl.classList.add("hidden");
+  if (commitBlockEl) commitBlockEl.classList.add("hidden");
+  if (branchBlockEl) branchBlockEl.classList.add("hidden");
+
+  // Update success details
+  if (commitSuccessDetailsEl) {
+    commitSuccessDetailsEl.textContent = `Committed "${commitMessage}" to branch "${branch}"`;
+  }
+
+  // Show success section
+  if (successSectionEl) {
+    successSectionEl.classList.remove("hidden");
+  }
+
+  // Clear any status messages
+  setStatus("", "success");
+}
+
+function handleRefreshPageClick() {
+  // Refresh the current repository page
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]?.id) {
+      chrome.tabs.reload(tabs[0].id);
+    }
+  });
+}
+
+function handleStartOverClick() {
+  // Reset the entire interface to start fresh
+  if (successSectionEl) successSectionEl.classList.add("hidden");
+  if (sectionsBlockEl) sectionsBlockEl.classList.remove("hidden");
+  if (resultSectionEl) resultSectionEl.classList.add("hidden");
+  if (commitBlockEl) commitBlockEl.classList.add("hidden");
+  if (branchBlockEl) branchBlockEl.classList.add("hidden");
+
+  // Reset form values
+  if (editorEl) editorEl.value = "";
+  if (commitInputEl) commitInputEl.value = "docs: add generated README";
+
+  // Reset variables
+  editableReadme = "";
+  generatedReadme = "";
+  sectionsGenerated = [];
+  commitMessage = "docs: add generated README";
+
+  setStatus("Ready to generate a new README", "info");
 }

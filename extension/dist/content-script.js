@@ -143,22 +143,46 @@ function ensureCta() {
     catch {
         // Silent fail; default theme remains.
     }
+    // Header with logo
+    const header = document.createElement("div");
+    header.className = "readme-ai-cta__header";
+    const logo = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    logo.setAttribute("class", "readme-ai-cta__logo");
+    logo.setAttribute("viewBox", "0 0 220 180");
+    logo.setAttribute("role", "img");
+    logo.setAttribute("aria-label", "README AI logo");
+    logo.innerHTML = `
+    <defs>
+      <style>
+        .logo-icon { fill: none; stroke: currentColor; stroke-width: 3; }
+        .logo-text { fill: currentColor; font-family: monospace; font-weight: bold; text-anchor: middle; }
+        .logo-subtext { fill: currentColor; font-family: monospace; text-anchor: middle; opacity: 0.85; }
+      </style>
+    </defs>
+    <path class="logo-icon" d="M40,20 H140 L180,60 V160 H40 Z"/>
+    <polyline class="logo-icon" points="140,20 140,60 180,60"/>
+    <text class="logo-text" x="110" y="90" font-size="36">AI</text>
+    <text class="logo-subtext" x="110" y="130" font-size="16">readme.md</text>
+  `;
     const heading = document.createElement("span");
-    heading.textContent = "Try README AI";
+    heading.textContent = "README AI";
     heading.className = "readme-ai-cta__heading";
+    header.append(logo, heading);
     const body = document.createElement("p");
-    body.textContent = "Generate polished READMEs automatically.";
+    body.textContent = "Generate polished READMEs automatically with AI-powered insights.";
     body.className = "readme-ai-cta__description";
     ctaMessage = body;
     const button = document.createElement("button");
     button.type = "button";
     button.className = "readme-ai-cta__button";
-    button.textContent = CTA_DEFAULT_LABEL;
+    const buttonText = document.createElement("span");
+    buttonText.textContent = CTA_DEFAULT_LABEL;
+    button.appendChild(buttonText);
     button.addEventListener("click", () => {
         void startAuthFromContent();
     });
     ctaButton = button;
-    container.append(heading, body, button);
+    container.append(header, body, button);
     if (document.body) {
         document.body.appendChild(container);
     }
@@ -240,27 +264,61 @@ function ensureRepoCta(repo) {
         catch {
             // ignore theme detection errors
         }
+        // Header with logo
+        const header = document.createElement("div");
+        header.className = "readme-ai-cta__header";
+        const logo = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        logo.setAttribute("class", "readme-ai-cta__logo");
+        logo.setAttribute("viewBox", "0 0 220 180");
+        logo.setAttribute("role", "img");
+        logo.setAttribute("aria-label", "README AI logo");
+        logo.innerHTML = `
+      <defs>
+        <style>
+          .logo-icon { fill: none; stroke: currentColor; stroke-width: 3; }
+          .logo-text { fill: currentColor; font-family: monospace; font-weight: bold; text-anchor: middle; }
+          .logo-subtext { fill: currentColor; font-family: monospace; text-anchor: middle; opacity: 0.85; }
+        </style>
+      </defs>
+      <path class="logo-icon" d="M40,20 H140 L180,60 V160 H40 Z"/>
+      <polyline class="logo-icon" points="140,20 140,60 180,60"/>
+      <text class="logo-text" x="110" y="90" font-size="36">AI</text>
+      <text class="logo-subtext" x="110" y="130" font-size="16">readme.md</text>
+    `;
         const heading = document.createElement("span");
         heading.className = "readme-ai-cta__heading";
         heading.textContent = "README AI";
+        header.append(logo, heading);
         const description = document.createElement("p");
         description.className = "readme-ai-cta__description";
         description.textContent = "This repository is connected to README AI.";
+        // Repository name with proper truncation handling
+        const repoName = document.createElement("span");
+        repoName.className = "readme-ai-cta__repo-name";
+        repoName.textContent = repo.full_name || repo.name;
+        repoName.title = repo.full_name || repo.name; // Tooltip for full name
+        description.appendChild(repoName);
         const button = document.createElement("button");
         button.type = "button";
         button.className = "readme-ai-cta__button";
         repoCtaButton = button;
-        container.append(heading, description, button);
+        container.append(header, description, button);
         repoCtaContainer = container;
         document.body?.appendChild(container);
     }
     if (!repoCtaContainer) {
         repoCtaContainer = container ?? undefined;
     }
-    const buttonLabel = `Generate README for ${repo.name}`;
+    // Smart button text based on repository name length
+    const displayName = repo.name.length > 20 ? repo.name.substring(0, 20) + '…' : repo.name;
+    const buttonLabel = `Generate README for ${displayName}`;
     if (repoCtaButton) {
-        repoCtaButton.textContent = buttonLabel;
-        repoCtaButton.onclick = () => openReadmePanel(repo); // This now calls the fixed function
+        const buttonText = document.createElement("span");
+        buttonText.textContent = buttonLabel;
+        repoCtaButton.innerHTML = '';
+        repoCtaButton.appendChild(buttonText);
+        repoCtaButton.title = `Generate README for ${repo.full_name || repo.name}`; // Full tooltip
+        repoCtaButton.onclick = () => openReadmePanel(repo);
     }
 }
 function removeRepoCta() {
@@ -302,29 +360,33 @@ function setCtaState(state, errorMessage) {
         return;
     }
     ctaButton.disabled = state === "loading";
+    // Reset classes
+    ctaButton.classList.remove("readme-ai-cta__button--success", "readme-ai-cta__button--error", "readme-ai-cta__button--loading");
+    const buttonText = ctaButton.querySelector("span");
     switch (state) {
         case "idle":
-            ctaButton.textContent = CTA_DEFAULT_LABEL;
-            ctaMessage.textContent = "Generate polished READMEs automatically.";
-            ctaButton.classList.remove("readme-ai-cta__button--success", "readme-ai-cta__button--error");
+            if (buttonText)
+                buttonText.textContent = CTA_DEFAULT_LABEL;
+            ctaMessage.textContent = "Generate polished READMEs automatically with AI-powered insights.";
             break;
         case "loading":
-            ctaButton.textContent = CTA_LOADING_LABEL;
+            if (buttonText)
+                buttonText.textContent = CTA_LOADING_LABEL;
             ctaMessage.textContent = "Connecting to README AI…";
-            ctaButton.classList.remove("readme-ai-cta__button--success", "readme-ai-cta__button--error");
+            ctaButton.classList.add("readme-ai-cta__button--loading");
             break;
         case "success":
-            ctaButton.textContent = CTA_SUCCESS_LABEL;
+            if (buttonText)
+                buttonText.textContent = CTA_SUCCESS_LABEL;
             ctaMessage.textContent = "You can now open README AI from the extension.";
             ctaButton.classList.add("readme-ai-cta__button--success");
-            ctaButton.classList.remove("readme-ai-cta__button--error");
             ctaButton.disabled = true;
             break;
         case "error":
-            ctaButton.textContent = CTA_DEFAULT_LABEL;
+            if (buttonText)
+                buttonText.textContent = CTA_DEFAULT_LABEL;
             ctaMessage.textContent = errorMessage ?? CTA_ERROR_LABEL;
             ctaButton.classList.add("readme-ai-cta__button--error");
-            ctaButton.classList.remove("readme-ai-cta__button--success");
             break;
         default:
             break;
@@ -344,90 +406,281 @@ function ensureCtaStyles() {
       z-index: 2147483647;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      padding: 16px;
-      border-radius: 12px;
+      gap: 12px;
+      padding: 20px;
+      border-radius: 16px;
       background: var(--bg-secondary);
       color: var(--text-primary);
       box-shadow: var(--shadow-lg);
-      max-width: 280px;
+      max-width: 320px;
+      min-width: 280px;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       border: 1px solid var(--border);
       backdrop-filter: blur(12px);
+      animation: slideInBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+      opacity: 0;
+      transform: translateY(100px) scale(0.8);
     }
+
+    @keyframes slideInBounce {
+      0% {
+        opacity: 0;
+        transform: translateY(100px) scale(0.8);
+      }
+      70% {
+        opacity: 1;
+        transform: translateY(-8px) scale(1.02);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-3px); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
     .readme-ai-cta[data-theme="dark"] {
       background: var(--bg-secondary);
       color: var(--text-primary);
       border-color: var(--border);
     }
-    /* Inject app theme variables locally (light) */
+
+    /* Enhanced theme variables */
     .readme-ai-cta {
       --bg-primary: #fafbfc;
-      --bg-secondary: #ffffff;
+      --bg-secondary: rgba(255, 255, 255, 0.95);
       --text-primary: #1a1a1a;
       --text-secondary: #586069;
+      --text-tertiary: #8b949e;
       --primary: #8a2be2;
       --primary-hover: #7928ca;
       --primary-light: #a855f7;
-      --border: #e1e4e8;
+      --border: rgba(225, 228, 232, 0.8);
+      --accent: #0969da;
+      --success: #2ea043;
       --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
       --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-      --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.05);
     }
-    /* Dark mode variable overrides */
+
     .readme-ai-cta[data-theme="dark"] {
       --bg-primary: #0d1117;
-      --bg-secondary: #161b22;
+      --bg-secondary: rgba(22, 27, 34, 0.95);
       --text-primary: #e6edf3;
       --text-secondary: #8b949e;
+      --text-tertiary: #656d76;
       --primary: #a855f7;
       --primary-hover: #c084fc;
       --primary-light: #d8b4fe;
-      --border: #30363d;
+      --border: rgba(48, 54, 61, 0.8);
+      --accent: #58a6ff;
+      --success: #3fb950;
       --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
       --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
-      --shadow-lg: 0 8px 24px rgba(0,0,0,0.6);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1);
     }
+
+    .readme-ai-cta__header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .readme-ai-cta__logo {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      animation: logoFloat 3s ease-in-out infinite;
+      filter: drop-shadow(0 2px 4px rgba(138, 43, 226, 0.2));
+    }
+
     .readme-ai-cta__heading {
-      font-weight: 600;
-      font-size: 16px;
-      line-height: 1.3;
+      font-weight: 700;
+      font-size: 18px;
+      line-height: 1.2;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
+
     .readme-ai-cta__description {
       margin: 0;
-      font-size: 13px;
-      color: var(--text-secondary, rgba(240, 246, 252, 0.85));
-      line-height: 1.4;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      font-weight: 400;
     }
+
     .readme-ai-cta__button {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
-      color: var(--text-button, var(--text-primary));
-      background: var(--primary);
-      transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-      box-shadow: var(--shadow-sm);
-    }
-    .readme-ai-cta[data-theme="dark"] .readme-ai-cta__button { color: #ffffff; background: var(--primary); }
-    .readme-ai-cta__button:hover:not(:disabled) {
-      background: var(--primary-hover);
-      transform: translateY(-1px);
+      color: #ffffff;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
     }
+
+    .readme-ai-cta__button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .readme-ai-cta__button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(138, 43, 226, 0.4);
+      background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary-light) 100%);
+    }
+
+    .readme-ai-cta__button:hover:not(:disabled)::before {
+      left: 100%;
+    }
+
+    .readme-ai-cta__button:active {
+      transform: translateY(0);
+    }
+
     .readme-ai-cta__button:disabled {
       cursor: default;
-      opacity: 0.75;
+      opacity: 0.7;
+      transform: none !important;
     }
+
     .readme-ai-cta__button--success {
-      background: var(--primary-light);
-      color: #ffffff;
+      background: linear-gradient(135deg, var(--success) 0%, #22c55e 100%);
+      animation: successPulse 2s ease-in-out infinite;
     }
+
+    .readme-ai-cta__button--success:hover:not(:disabled) {
+      box-shadow: 0 8px 25px rgba(46, 160, 67, 0.4);
+    }
+
     .readme-ai-cta__button--error {
-      background: #f85149;
-      color: #ffffff;
+      background: linear-gradient(135deg, #f85149 0%, #ef4444 100%);
+      animation: errorShake 0.5s ease-in-out;
+    }
+
+    @keyframes successPulse {
+      0%, 100% { box-shadow: 0 4px 12px rgba(46, 160, 67, 0.3); }
+      50% { box-shadow: 0 4px 20px rgba(46, 160, 67, 0.5); }
+    }
+
+    @keyframes errorShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* Repository CTA specific styles */
+    .readme-ai-cta--repo {
+      animation: slideInFromRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+      background: var(--bg-secondary);
+      border-left: 4px solid var(--primary);
+    }
+
+    .readme-ai-cta--repo .readme-ai-cta__heading {
+      font-size: 16px;
+    }
+
+    .readme-ai-cta--repo .readme-ai-cta__description {
+      font-size: 13px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .readme-ai-cta--repo .readme-ai-cta__repo-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      display: block;
+      margin-top: 4px;
+      font-size: 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+
+    @keyframes slideInFromRight {
+      0% {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Loading state */
+    .readme-ai-cta__button--loading {
+      background: linear-gradient(135deg, var(--text-tertiary) 0%, var(--text-secondary) 100%);
+      position: relative;
+    }
+
+    .readme-ai-cta__button--loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 16px;
+      height: 16px;
+      margin: -8px 0 0 -8px;
+      border: 2px solid transparent;
+      border-top: 2px solid #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .readme-ai-cta__button--loading span {
+      opacity: 0;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .readme-ai-cta {
+        bottom: 16px;
+        right: 16px;
+        max-width: 280px;
+        min-width: 260px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .readme-ai-cta {
+        left: 16px;
+        right: 16px;
+        max-width: none;
+        min-width: auto;
+      }
     }
   `;
     document.head.appendChild(style);

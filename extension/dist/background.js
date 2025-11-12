@@ -8,12 +8,151 @@ const REPOSITORIES_STORAGE_KEY = "userRepositories";
 let pendingReadmeRepo = null;
 let pendingAuthTabId = null;
 let pendingAuthWindowId = null;
+// --- Context menu identifiers ---
+const MENU_ID_LOGIN = "readme-ai-login";
+const MENU_ID_LOGOUT = "readme-ai-logout";
+const MENU_ID_DASHBOARD = "readme-ai-dashboard";
+const MENU_ID_HISTORY = "readme-ai-history";
+const MENU_ID_SETTINGS = "readme-ai-settings";
+const MENU_ID_SEPARATOR = "readme-ai-separator";
 chrome.runtime.onInstalled.addListener(async () => {
     const keysToRemove = ["legacyAuthToken", REPOSITORIES_STORAGE_KEY];
     if (keysToRemove.length > 0) {
         await chrome.storage.local.remove(keysToRemove);
     }
+    await createOrRefreshContextMenus();
+    await updateContextMenuVisibility(false);
 });
+chrome.runtime.onStartup.addListener(async () => {
+    await createOrRefreshContextMenus();
+    const tokens = await getStoredTokens();
+    await updateContextMenuVisibility(!!tokens);
+});
+chrome.contextMenus.onClicked.addListener(async (info) => {
+    switch (info.menuItemId) {
+        case MENU_ID_DASHBOARD:
+            chrome.tabs.create({ url: `${FRONTEND_HOST_URL}/dashboard` });
+            break;
+        case MENU_ID_HISTORY:
+            chrome.tabs.create({ url: `${FRONTEND_HOST_URL}/history` });
+            break;
+        case MENU_ID_SETTINGS:
+            chrome.tabs.create({ url: `${FRONTEND_HOST_URL}/settings` });
+            break;
+        case MENU_ID_LOGIN:
+            await handleContextMenuLogin();
+            break;
+        case MENU_ID_LOGOUT:
+            await handleContextMenuLogout();
+            break;
+        default:
+            break;
+    }
+});
+async function createOrRefreshContextMenus() {
+    await new Promise((resolve) => {
+        chrome.contextMenus.removeAll(() => {
+            void chrome.runtime.lastError;
+            const createMenu = (properties, onDone) => {
+                chrome.contextMenus.create(properties, () => {
+                    const err = chrome.runtime.lastError;
+                    if (err && typeof err.message === "string" && !err.message.includes("duplicate id")) {
+                        console.warn("README AI extension: failed to create context menu", properties.id ?? properties.title, err.message);
+                    }
+                    if (onDone)
+                        onDone();
+                });
+            };
+            createMenu({
+                id: MENU_ID_DASHBOARD,
+                title: "View in App (Dashboard)",
+                contexts: ["action"]
+            });
+            createMenu({
+                id: MENU_ID_HISTORY,
+                title: "View History",
+                contexts: ["action"]
+            });
+            createMenu({
+                id: MENU_ID_SETTINGS,
+                title: "View Settings",
+                contexts: ["action"]
+            });
+            createMenu({
+                id: MENU_ID_SEPARATOR,
+                type: "separator",
+                contexts: ["action"]
+            });
+            createMenu({
+                id: MENU_ID_LOGIN,
+                title: "Login",
+                contexts: ["action"]
+            });
+            createMenu({
+                id: MENU_ID_LOGOUT,
+                title: "Logout",
+                contexts: ["action"]
+            }, resolve);
+        });
+    });
+}
+async function updateContextMenuVisibility(isLoggedIn) {
+    const updates = [
+        [MENU_ID_LOGIN, !isLoggedIn],
+        [MENU_ID_LOGOUT, isLoggedIn],
+        [MENU_ID_DASHBOARD, isLoggedIn],
+        [MENU_ID_HISTORY, isLoggedIn],
+        [MENU_ID_SETTINGS, isLoggedIn],
+        [MENU_ID_SEPARATOR, isLoggedIn]
+    ];
+    const results = await Promise.all(updates.map(([menuId, visible]) => updateContextMenuItemVisibility(menuId, visible)));
+    if (results.includes(false)) {
+        await createOrRefreshContextMenus();
+        await Promise.all(updates.map(([menuId, visible]) => updateContextMenuItemVisibility(menuId, visible)));
+    }
+}
+function updateContextMenuItemVisibility(menuId, visible) {
+    return new Promise((resolve) => {
+        chrome.contextMenus.update(menuId, { visible }, () => {
+            const err = chrome.runtime.lastError;
+            if (err) {
+                if (typeof err.message === "string" && err.message.includes("Cannot find menu item")) {
+                    resolve(false);
+                    return;
+                }
+                console.warn(`README AI extension: failed to update context menu ${menuId}`, err.message);
+            }
+            resolve(true);
+        });
+    });
+}
+async function handleContextMenuLogin() {
+    try {
+        await startAuthFlow();
+        await updateContextMenuVisibility(true);
+        await broadcastAuthSuccess();
+    }
+    catch (error) {
+        await updateContextMenuVisibility(false);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error("README AI extension: auth flow failed from context menu", errorMessage);
+        await broadcastToGithubTabs({ type: "AUTH_FAILURE", error: errorMessage });
+    }
+}
+async function handleContextMenuLogout() {
+    await chrome.storage.local.clear();
+    if (chrome.storage.session) {
+        await chrome.storage.session.clear();
+    }
+    pendingReadmeRepo = null;
+    await updateContextMenuVisibility(false);
+    await broadcastToGithubTabs({ type: "AUTH_FAILURE", error: "You have been logged out." });
+}
+void (async () => {
+    await createOrRefreshContextMenus();
+    const tokens = await getStoredTokens();
+    await updateContextMenuVisibility(!!tokens);
+})();
 chrome.action.onClicked.addListener(async (tab) => {
     if (tab.id) {
         await chrome.sidePanel.open({ tabId: tab.id });
@@ -86,6 +225,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "GET_AUTH_STATUS") {
         void (async () => {
             const tokens = await getStoredTokens();
+            await updateContextMenuVisibility(!!tokens);
             if (!tokens) {
                 sendResponse({ tokens: undefined });
                 return;
@@ -101,7 +241,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     if (message.type === "START_AUTH") {
         void startAuthFlow()
-            .then(() => {
+            .then(async () => {
+            await updateContextMenuVisibility(true);
             void broadcastAuthSuccess();
             sendResponse({ ok: true });
         })
@@ -109,6 +250,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             const errorMessage = error instanceof Error ? error.message : "Unknown error";
             console.error("README AI extension: auth flow failed", errorMessage);
             void broadcastToGithubTabs({ type: "AUTH_FAILURE", error: errorMessage });
+            void updateContextMenuVisibility(false);
             sendResponse({ ok: false, error: errorMessage });
         });
         return true;
