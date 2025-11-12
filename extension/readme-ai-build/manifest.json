@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "README AI Helper",
+  "description": "Surface README AI entry points on GitHub and manage authentication.",
+  "version": "0.1.0",
+  "permissions": ["storage", "scripting", "tabs", "sidePanel", "contextMenus"],
+  "host_permissions": [
+    "https://github.com/*",
+    "https://api.github.com/*",
+    "https://ai-readme-generator-be-912048666815.us-central1.run.app/*",
+    "https://ai-readme-generator-912048666815.us-central1.run.app/*"
+  ],
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  },
+  "icons": {
+    "16": "assets/icon16.png",
+    "32": "assets/icon32.png",
+    "48": "assets/icon48.png",
+    "128": "assets/icon128.png"
+  },
+  "side_panel": {
+    "default_path": "sidebar.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["shared/constants.global.js", "dist/content-script.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_title": "README AI"
+  }
+}
