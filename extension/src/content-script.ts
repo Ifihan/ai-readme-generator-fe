@@ -46,6 +46,20 @@ let hideTimeout: number | undefined;
 let repoCtaContainer: HTMLDivElement | undefined;
 let repoCtaButton: HTMLButtonElement | undefined;
 
+// --- THIS FUNCTION IS NOW FIXED ---
+// It no longer accesses storage. It just sends the repo data.
+async function openReadmePanel(repo: UserRepository): Promise<void> {
+  try {
+    // 1. Tell the background to save the repo and show the panel
+    await chrome.runtime.sendMessage({
+      type: "SHOW_SIDE_PANEL_FOR_REPO",
+      payload: { repo }
+    });
+  } catch (e) {
+    console.error('README AI: Failed to send open side panel message', e);
+  }
+}
+
 if (document.readyState === "loading") {
   window.addEventListener("DOMContentLoaded", handleInitialLoad, { once: true });
 } else {
@@ -53,43 +67,31 @@ if (document.readyState === "loading") {
 }
 
 chrome.runtime.onMessage.addListener((message: BackgroundMessage) => {
-  if (!message || typeof message.type !== "string") {
-    return undefined;
+  if (!message || typeof message.type !== "string") return undefined;
+  if (message.type === "CHECK_AUTH") {
+    void evaluateAuthState("runtime-message");
+  } else if (message.type === "AUTH_SUCCESS") {
+    setCtaState("success");
+    void evaluateAuthState("runtime-message");
+  } else if (message.type === "AUTH_FAILURE") {
+    setCtaState("error", message.error);
+    removeRepoCta();
   }
-
-  switch (message.type) {
-    case "CHECK_AUTH":
-      void evaluateAuthState("runtime-message");
-      break;
-    case "AUTH_SUCCESS":
-      showSuccessState();
-      void evaluateAuthState("runtime-message");
-      break;
-    case "AUTH_FAILURE":
-      showErrorState(message.error);
-      removeRepoCta();
-      break;
-    default:
-      break;
-  }
-
   return undefined;
 });
 
 // Also support window-based messaging from background (dispatched via executeScript).
 // This avoids extension messaging port races when the content script hasn't finished init.
 window.addEventListener("message", (event: MessageEvent) => {
-  // Only accept messages from same page context
   if (event.source !== window) return;
   const data = event.data as { source?: string; type?: string; payload?: unknown } | undefined;
   if (!data || data.source !== "readme-ai") return;
-
   if (data.type === "CHECK_AUTH") {
     void evaluateAuthState("runtime-message");
   } else if (data.type === "AUTH_SUCCESS") {
-    showSuccessState();
+    setCtaState("success");
   } else if (data.type === "AUTH_FAILURE") {
-    showErrorState(typeof data.payload === "string" ? data.payload : undefined);
+    setCtaState("error", typeof data.payload === "string" ? data.payload : undefined);
   }
 });
 
@@ -102,7 +104,6 @@ async function evaluateAuthState(trigger: "initial-load" | "runtime-message"): P
   const status = await requestAuthStatus();
   const tokens = status?.tokens;
   const repositories = status?.repositories;
-
   if (tokens) {
     removeCta();
     persistRepositoriesToLocalStorage(repositories);
@@ -111,18 +112,15 @@ async function evaluateAuthState(trigger: "initial-load" | "runtime-message"): P
     ensureCta();
     removeRepoCta();
   } else if (trigger === "initial-load") {
-    // The DOM is still booting; retry shortly.
-    window.setTimeout(() => {
-      void evaluateAuthState("initial-load");
-    }, 250);
+    window.setTimeout(() => void evaluateAuthState("initial-load"), 250);
   }
 }
 
+// Background auth status helper
 async function requestAuthStatus(): Promise<AuthStatusResponse | undefined> {
   return new Promise<AuthStatusResponse | undefined>((resolve) => {
     chrome.runtime.sendMessage({ type: "GET_AUTH_STATUS" }, (response?: AuthStatusResponse) => {
       if (chrome.runtime.lastError) {
-        console.debug("README AI extension: unable to fetch auth status", chrome.runtime.lastError.message);
         resolve(undefined);
         return;
       }
@@ -131,6 +129,7 @@ async function requestAuthStatus(): Promise<AuthStatusResponse | undefined> {
   });
 }
 
+// --- START_AUTH Integration ---
 async function startAuthFromContent(): Promise<void> {
   setCtaState("loading");
   try {
@@ -140,15 +139,14 @@ async function startAuthFromContent(): Promise<void> {
           reject(new Error(chrome.runtime.lastError.message));
           return;
         }
-
         if (!response || !response.ok) {
           reject(new Error(response?.error ?? "Auth flow failed"));
           return;
         }
-
         resolve();
       });
     });
+    // Note: The 'AUTH_SUCCESS' message from background will trigger the state change
   } catch (error) {
     const message = error instanceof Error ? error.message : undefined;
     showErrorState(message);
@@ -160,11 +158,9 @@ function ensureCta(): void {
   if (existing) {
     return;
   }
-
   const container = document.createElement("div");
   container.id = CTA_CONTAINER_ID;
   container.className = "readme-ai-cta";
-  // Detect GitHub theme from html[data-color-mode] or body class for dark mode.
   try {
     const html = document.documentElement;
     const colorMode = html.getAttribute("data-color-mode") || html.getAttribute("data-theme");
@@ -202,13 +198,13 @@ function ensureCta(): void {
 
   setCtaState("idle");
 }
+// --- END AUTH CTA ---
 
 function removeCta(): void {
   if (hideTimeout) {
     window.clearTimeout(hideTimeout);
     hideTimeout = undefined;
   }
-
   const container = document.getElementById(CTA_CONTAINER_ID);
   if (container?.parentElement) {
     container.parentElement.removeChild(container);
@@ -226,7 +222,6 @@ function persistRepositoriesToLocalStorage(repositories?: UserRepository[] | nul
     }
     return;
   }
-
   try {
     window.localStorage.setItem(REPO_STORAGE_KEY, JSON.stringify(repositories));
   } catch (error) {
@@ -307,9 +302,7 @@ function ensureRepoCta(repo: UserRepository): void {
   const buttonLabel = `Generate README for ${repo.name}`;
   if (repoCtaButton) {
     repoCtaButton.textContent = buttonLabel;
-    repoCtaButton.onclick = () => {
-      console.log(`[README AI] Generate README requested for ${repo.full_name}`);
-    };
+    repoCtaButton.onclick = () => openReadmePanel(repo); // This now calls the fixed function
   }
 }
 
@@ -329,6 +322,15 @@ function normalizeRepoUrl(value: string): string {
   } catch {
     return value.trim().replace(/\/$/, "").toLowerCase();
   }
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function showSuccessState(): void {

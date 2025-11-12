@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>README AI</title>
+    <style>
+      :root {
+        --bg: #0d1117;
+        --panel: #161b22;
+        --text: #e6edf3;
+        --muted: #8b949e;
+        --primary: #a855f7;
+        --primary-hover: #c084fc;
+        --border: #30363d;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        background: var(--bg); color: var(--text);
+      }
+      header { padding: 16px; border-bottom: 1px solid var(--border); background: var(--panel); }
+      header h1 { margin: 0 0 6px; font-size: 16px; }
+      header p { margin: 0; color: var(--muted); font-size: 12px; }
+      #status-message { padding: 10px 16px; font-size: 12px; color: var(--muted); }
+      main { padding: 12px 16px 80px; display: flex; flex-direction: column; gap: 12px; }
+      section.block { border: 1px solid var(--border); border-radius: 8px; background: var(--panel); padding: 12px; }
+      .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+      .row > * { flex: 0 0 auto; }
+      #sections-container { display: grid; grid-template-columns: 1fr; gap: 8px; }
+      .section-item { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
+      .section-item p { margin: 0; font-size: 12px; color: var(--muted); }
+      .actions { display: flex; gap: 8px; }
+      button { border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; font-weight: 600; background: var(--primary); color: #fff; cursor: pointer; }
+      button:disabled { opacity: .6; cursor: default; }
+      button.secondary { background: transparent; color: var(--text); }
+      textarea { width: 100%; min-height: 280px; background: #0b0f15; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 12px; resize: vertical; }
+      select, input[type="text"], input[type="search"] { background: #0b0f15; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; }
+      footer.sticky { position: sticky; bottom: 0; background: var(--panel); padding: 12px 16px; border-top: 1px solid var(--border); }
+      .small { font-size: 12px; color: var(--muted); }
+      .hidden { display: none !important; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>README AI</h1>
+      <p id="repo-name" class="small">Loading repository…</p>
+    </header>
+
+    <div id="status-message" role="status"></div>
+
+    <main>
+      <section id="sections-block" class="block">
+        <div class="row" style="justify-content: space-between;">
+          <strong>Sections</strong>
+          <div class="row">
+            <label class="row" style="gap:6px;">
+              <input type="checkbox" id="include-badges" checked />
+              <span class="small">Include badges</span>
+            </label>
+            <label>
+              <select id="badge-style">
+                <option value="flat">flat</option>
+                <option value="plastic">plastic</option>
+                <option value="flat-square">flat-square</option>
+                <option value="for-the-badge">for-the-badge</option>
+                <option value="social">social</option>
+              </select>
+            </label>
+            <button id="generate-button">Generate</button>
+          </div>
+        </div>
+        <div id="sections-container"></div>
+      </section>
+
+      <section id="result-section" class="block hidden">
+        <p id="sections-summary" class="small"></p>
+        <textarea id="editor" placeholder="Your README will appear here…"></textarea>
+        <div class="actions">
+          <button id="copy-button" class="secondary">Copy</button>
+          <button id="download-button" class="secondary">Download</button>
+          <button id="save-button">Save to GitHub</button>
+        </div>
+      </section>
+
+      <section id="commit-block" class="block hidden">
+        <div class="row">
+          <label class="row" style="gap:6px;">
+            <span class="small">Commit message</span>
+            <input id="commit-input" type="text" placeholder="docs: add generated README" />
+          </label>
+        </div>
+      </section>
+
+      <section id="branch-block" class="block hidden">
+        <p id="branch-status" class="small">Select a branch</p>
+        <div class="row">
+          <select id="branch-select"></select>
+          <input id="branch-create-input" type="text" placeholder="new-branch-name" />
+          <button id="branch-create-button" class="secondary">Create branch</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="sticky small">
+      Tip: Update the sections and regenerate as needed before saving.
+    </footer>
+
+    <script src="sidebar.js" defer></script>
+  </body>
+</html>

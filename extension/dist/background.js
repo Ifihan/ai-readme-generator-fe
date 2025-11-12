@@ -1,27 +1,35 @@
 "use strict";
 /// <reference types="chrome" />
 const GITHUB_HOST = "github.com";
-// Backend REST API base used for obtaining OAuth redirect URLs.
 const API_BASE_URL = "https://ai-readme-generator-be-912048666815.us-central1.run.app";
-// Frontend host used during the OAuth completion step (where tokens land in localStorage).
 const FRONTEND_HOST_URL = "https://ai-readme-generator-912048666815.us-central1.run.app";
 const REPOSITORIES_STORAGE_KEY = "userRepositories";
+// --- State for the side panel handshake ---
+let pendingReadmeRepo = null;
 let pendingAuthTabId = null;
 let pendingAuthWindowId = null;
 chrome.runtime.onInstalled.addListener(async () => {
-    // Ensure we start with a clean slate if previous builds stored legacy keys.
     const keysToRemove = ["legacyAuthToken", REPOSITORIES_STORAGE_KEY];
     if (keysToRemove.length > 0) {
         await chrome.storage.local.remove(keysToRemove);
     }
 });
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+chrome.action.onClicked.addListener(async (tab) => {
+    if (tab.id) {
+        await chrome.sidePanel.open({ tabId: tab.id });
+    }
+});
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     if (changeInfo.status !== "complete" || !tab.url)
         return;
     try {
         const url = new URL(tab.url);
         if (url.hostname === GITHUB_HOST) {
+            await chrome.sidePanel.setOptions({ tabId, path: "sidebar.html", enabled: true });
             void sendCheckAuthWithRetry(tabId);
+        }
+        else {
+            await chrome.sidePanel.setOptions({ tabId, enabled: false });
         }
     }
     catch (error) {
@@ -47,7 +55,6 @@ async function sendCheckAuthWithRetry(tabId, maxAttempts = 5, initialDelayMs = 2
         const ok = await sendCheckAuthOnce(tabId);
         if (ok)
             return;
-        // Try window.postMessage injection as fallback on last attempt.
         if (attempt === maxAttempts) {
             try {
                 await chrome.scripting.executeScript({
@@ -61,20 +68,14 @@ async function sendCheckAuthWithRetry(tabId, maxAttempts = 5, initialDelayMs = 2
             catch { /* ignore */ }
             return;
         }
-        await delay(initialDelayMs * attempt); // simple linear backoff
+        await delay(initialDelayMs * attempt);
     }
 }
 function sendCheckAuthOnce(tabId) {
     return new Promise((resolve) => {
         chrome.tabs.sendMessage(tabId, { type: "CHECK_AUTH" }, () => {
             const err = chrome.runtime.lastError;
-            if (err) {
-                // Silently retry without spamming the console.
-                resolve(false);
-            }
-            else {
-                resolve(true);
-            }
+            resolve(!err);
         });
     });
 }
@@ -112,12 +113,230 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
         return true;
     }
+    // --- UPDATED HANDLER ---
+    if (message.type === "SHOW_SIDE_PANEL_FOR_REPO") {
+        void (async () => {
+            const tabId = sender.tab?.id;
+            if (tabId) {
+                // 1. Store the repo in the temporary variable
+                pendingReadmeRepo = message.payload.repo;
+                // 2. Open the side panel. This is the first await, so it works.
+                await chrome.sidePanel.open({ tabId });
+                // We no longer use session storage for this
+            }
+        })();
+        return; // No response needed
+    }
+    // --- NEW HANDLER ---
+    if (message.type === "GET_PENDING_REPO") {
+        // The side panel is ready and asking for the repo
+        if (pendingReadmeRepo) {
+            sendResponse({ ok: true, data: { repo: pendingReadmeRepo } });
+            pendingReadmeRepo = null; // Clear it after it's been sent
+        }
+        else {
+            sendResponse({ ok: false, error: "No repository was pending." });
+        }
+        return true; // Keep message port open for async response
+    }
+    // --- END NEW HANDLER ---
+    if (message.type === "FETCH_README_TEMPLATES") {
+        void handleFetchReadmeTemplates(sendResponse);
+        return true;
+    }
+    if (message.type === "GENERATE_README") {
+        void handleGenerateReadme(message.payload, sendResponse);
+        return true;
+    }
+    if (message.type === "SAVE_README") {
+        void handleSaveReadme(message.payload, sendResponse);
+        return true;
+    }
+    if (message.type === "FETCH_BRANCHES") {
+        void handleFetchBranches(message.payload.repository_url, sendResponse);
+        return true;
+    }
+    if (message.type === "CREATE_BRANCH") {
+        void handleCreateBranch(message.payload.repository_url, message.payload.branch_name, sendResponse);
+        return true;
+    }
     return undefined;
 });
-// Auth flow: call backend /api/v1/auth/login to get oauth_url, open a popup window
-// where the web app handles OAuth and stores access_token in localStorage. When the
-// popup redirects back to the frontend, we poll localStorage for the token and persist
-// it in extension storage.
+// ... (All other functions from your original background.ts remain unchanged) ...
+// (handleFetchReadmeTemplates, handleGenerateReadme, all API functions, auth flow, etc.)
+async function handleFetchReadmeTemplates(sendResponse) {
+    try {
+        const templates = await fetchReadmeSectionTemplates();
+        sendResponse({ ok: true, data: { templates } });
+    }
+    catch (error) {
+        sendResponse({ ok: false, error: toErrorMessage(error) });
+    }
+}
+async function handleGenerateReadme(payload, sendResponse) {
+    if (!payload) {
+        sendResponse({ ok: false, error: "Missing generate payload" });
+        return;
+    }
+    try {
+        const response = await generateReadmeWithApi(payload);
+        sendResponse({ ok: true, data: response });
+    }
+    catch (error) {
+        sendResponse({ ok: false, error: toErrorMessage(error) });
+    }
+}
+async function handleSaveReadme(payload, sendResponse) {
+    if (!payload) {
+        sendResponse({ ok: false, error: "Missing save payload" });
+        return;
+    }
+    try {
+        const response = await saveReadmeWithApi(payload);
+        sendResponse({ ok: true, data: response });
+    }
+    catch (error) {
+        sendResponse({ ok: false, error: toErrorMessage(error) });
+    }
+}
+async function handleFetchBranches(repositoryUrl, sendResponse) {
+    if (!repositoryUrl) {
+        sendResponse({ ok: false, error: "Missing repository URL" });
+        return;
+    }
+    try {
+        const branches = await fetchBranchesWithApi(repositoryUrl);
+        sendResponse({ ok: true, data: { branches } });
+    }
+    catch (error) {
+        sendResponse({ ok: false, error: toErrorMessage(error) });
+    }
+}
+async function handleCreateBranch(repositoryUrl, branchName, sendResponse) {
+    if (!repositoryUrl || !branchName) {
+        sendResponse({ ok: false, error: "Missing branch parameters" });
+        return;
+    }
+    try {
+        await createBranchWithApi(repositoryUrl, branchName);
+        sendResponse({ ok: true });
+    }
+    catch (error) {
+        sendResponse({ ok: false, error: toErrorMessage(error) });
+    }
+}
+async function fetchReadmeSectionTemplates() {
+    const accessToken = await requireAccessToken();
+    const response = await fetch(new URL("/api/v1/readme/sections", API_BASE_URL).toString(), {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+        }
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch section templates: ${response.status}. Response: ${errorText}`);
+    }
+    const templates = (await response.json());
+    return Array.isArray(templates) ? templates : [];
+}
+async function generateReadmeWithApi(payload) {
+    const accessToken = await requireAccessToken();
+    const response = await fetch(new URL("/api/v1/readme/generate", API_BASE_URL).toString(), {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to generate README: ${response.status}. Response: ${errorText}`);
+    }
+    return (await response.json());
+}
+async function saveReadmeWithApi(payload) {
+    const accessToken = await requireAccessToken();
+    const response = await fetch(new URL("/api/v1/readme/save", API_BASE_URL).toString(), {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to save README: ${response.status}. Response: ${errorText}`);
+    }
+    return (await response.json());
+}
+async function fetchBranchesWithApi(repositoryUrl) {
+    const { owner, repo } = parseRepositoryUrl(repositoryUrl);
+    const accessToken = await requireAccessToken();
+    const response = await fetch(new URL(`/api/v1/readme/branches/${owner}/${repo}`, API_BASE_URL).toString(), {
+        method: "GET",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+        }
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch branches: ${response.status}. Response: ${errorText}`);
+    }
+    const json = (await response.json());
+    return Array.isArray(json?.branches) ? json.branches : [];
+}
+async function createBranchWithApi(repositoryUrl, branchName) {
+    const { owner, repo } = parseRepositoryUrl(repositoryUrl);
+    const accessToken = await requireAccessToken();
+    const response = await fetch(new URL(`/api/v1/readme/branches/${owner}/${repo}?branch_name=${encodeURIComponent(branchName)}`, API_BASE_URL).toString(), {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({})
+    });
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to create branch: ${response.status}. Response: ${errorText}`);
+    }
+}
+async function requireAccessToken() {
+    const tokens = await getStoredTokens();
+    if (!tokens?.accessToken) {
+        throw new Error("Not authenticated");
+    }
+    return tokens.accessToken;
+}
+function parseRepositoryUrl(repositoryUrl) {
+    try {
+        const url = new URL(repositoryUrl);
+        if (url.hostname !== GITHUB_HOST) {
+            throw new Error();
+        }
+        const parts = url.pathname.split("/").filter(Boolean);
+        const owner = parts[0];
+        const repo = parts[1]?.replace(/\.git$/i, "");
+        if (!owner || !repo) {
+            throw new Error();
+        }
+        return { owner, repo };
+    }
+    catch {
+        throw new Error("Invalid GitHub repository URL");
+    }
+}
+function toErrorMessage(error) {
+    if (error instanceof Error && typeof error.message === "string") {
+        return error.message;
+    }
+    return "Unexpected error";
+}
 async function startAuthFlow() {
     const loginUrl = new URL("/api/v1/auth/login", API_BASE_URL).toString();
     const res = await fetch(loginUrl, { method: "GET", credentials: "omit" });
@@ -247,25 +466,6 @@ async function waitForAccessTokenFromTab(tabId, timeoutMs = 30000, intervalMs = 
     return null;
 }
 function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-// Legacy helper retained for potential future use if switching back to launchWebAuthFlow.
-function extractTokens(responseUrl) {
-    const url = new URL(responseUrl);
-    if (url.hash && !url.search) {
-        // Some providers return data in the hash fragment.
-        const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
-        hashParams.forEach((value, key) => {
-            url.searchParams.set(key, value);
-        });
-    }
-    const accessToken = url.searchParams.get("access_token");
-    const refreshToken = url.searchParams.get("refresh_token") ?? undefined;
-    const expiresIn = Number(url.searchParams.get("expires_in") ?? "0");
-    if (!accessToken) {
-        throw new Error("Missing access token in auth response");
-    }
-    const expiresAt = Number.isFinite(expiresIn) && expiresIn > 0 ? Date.now() + expiresIn * 1000 : undefined;
-    return { accessToken, refreshToken, expiresAt };
-}
 async function getStoredTokens() {
     const { authTokens } = await chrome.storage.local.get("authTokens");
     return authTokens;
@@ -332,7 +532,6 @@ async function broadcastToGithubTabs(message) {
         .filter((tabId) => typeof tabId === "number")
         .map((tabId) => new Promise((resolve) => {
         chrome.tabs.sendMessage(tabId, message, () => {
-            // Ignore errors when the tab no longer exists or the content script is not injected.
             void chrome.runtime.lastError;
             resolve();
         });
