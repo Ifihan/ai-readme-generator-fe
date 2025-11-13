@@ -52,16 +52,20 @@ let pendingReadmeRepo: UserRepository | null = null;
 let pendingAuthTabId: number | null = null;
 let pendingAuthWindowId: number | null = null;
 
-// --- MODIFICATION: Added cache duration ---
 const REPO_CACHE_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   const keysToRemove = ["legacyAuthToken", REPOSITORIES_STORAGE_KEY];
   if (keysToRemove.length > 0) {
     await chrome.storage.local.remove(keysToRemove);
   }
   await createOrRefreshContextMenus();
   await updateContextMenuVisibility(false);
+
+  if (details.reason === "install") {
+    const onboardingUrl = chrome.runtime.getURL("onboarding.html");
+    await chrome.tabs.create({ url: onboardingUrl });
+  }
 });
 
 chrome.runtime.onStartup.addListener(async () => {
@@ -85,7 +89,8 @@ chrome.contextMenus.onClicked.addListener(async (info) => {
       await handleContextMenuLogin();
       break;
     case MENU_ID_LOGOUT:
-      await handleContextMenuLogout();
+      // This is now the one true source for logging out
+      await handleLogout("You have been logged out.");
       break;
     default:
       break;
@@ -191,15 +196,20 @@ async function handleContextMenuLogin(): Promise<void> {
   }
 }
 
-async function handleContextMenuLogout(): Promise<void> {
+// --- NEW: Central Logout/Auth Failure Function ---
+/**
+ * Clears all auth data, updates menus, and notifies content scripts.
+ */
+async function handleLogout(errorMessage: string): Promise<void> {
   await chrome.storage.local.clear();
   if (chrome.storage.session) {
     await chrome.storage.session.clear();
   }
   pendingReadmeRepo = null;
   await updateContextMenuVisibility(false);
-  await broadcastToGithubTabs({ type: MSG_AUTH_FAILURE, error: "You have been logged out." });
+  await broadcastToGithubTabs({ type: MSG_AUTH_FAILURE, error: errorMessage });
 }
+// --- END NEW ---
 
 void (async () => {
   await createOrRefreshContextMenus();
@@ -285,7 +295,6 @@ chrome.runtime.onMessage.addListener((message: ExtensionInboundMessage, sender: 
         sendResponse({ tokens: undefined } satisfies AuthStatusResponse);
         return;
       }
-      // --- MODIFICATION: Changed forceRefresh to false ---
       const cached = await ensureRepositories(tokens.accessToken, false);
       sendResponse({
         tokens,
@@ -313,33 +322,26 @@ chrome.runtime.onMessage.addListener((message: ExtensionInboundMessage, sender: 
     return true;
   }
 
-  // --- UPDATED HANDLER ---
   if (message.type === MSG_SHOW_SIDE_PANEL_FOR_REPO) {
     void (async () => {
       const tabId = sender.tab?.id;
       if (tabId) {
-        // 1. Store the repo in the temporary variable
         pendingReadmeRepo = message.payload.repo;
-        // 2. Open the side panel. This is the first await, so it works.
         await chrome.sidePanel.open({ tabId });
-        // We no longer use session storage for this
       }
     })();
-    return; // No response needed
+    return;
   }
 
-  // --- NEW HANDLER ---
   if (message.type === MSG_GET_PENDING_REPO) {
-    // The side panel is ready and asking for the repo
     if (pendingReadmeRepo) {
       sendResponse({ ok: true, data: { repo: pendingReadmeRepo } });
-      pendingReadmeRepo = null; // Clear it after it's been sent
+      pendingReadmeRepo = null;
     } else {
       sendResponse({ ok: false, error: "No repository was pending." });
     }
-    return true; // Keep message port open for async response
+    return true;
   }
-  // --- END NEW HANDLER ---
 
   if (message.type === MSG_FETCH_README_TEMPLATES) {
     void handleFetchReadmeTemplates(sendResponse);
@@ -369,13 +371,44 @@ chrome.runtime.onMessage.addListener((message: ExtensionInboundMessage, sender: 
   return undefined;
 });
 
-// ... (All other functions from your original background.ts remain unchanged) ...
-// (handleFetchReadmeTemplates, handleGenerateReadme, all API functions, auth flow, etc.)
+
+// --- NEW: Central API Fetch Wrapper ---
+/**
+ * A wrapper for fetch that automatically adds auth and handles 401 errors.
+ */
+async function apiFetch(url: URL, options: RequestInit = {}): Promise<any> {
+  const accessToken = await requireAccessToken();
+
+  const response = await fetch(url.toString(), {
+    ...options,
+    headers: {
+      ...options.headers,
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    }
+  });
+
+  if (response.status === 401) {
+    // Auth token expired or invalid
+    await handleLogout("Your session has expired. Please log in again.");
+    throw new Error("Your session has expired. Please log in again.");
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`API Error: ${response.status}. Response: ${errorText}`);
+  }
+
+  return response.json();
+}
+// --- END NEW ---
+
 
 async function handleFetchReadmeTemplates(sendResponse: (response: GenericBackgroundResponse<{ templates: SectionTemplate[] }>) => void): Promise<void> {
   try {
-    const templates = await fetchReadmeSectionTemplates();
-    sendResponse({ ok: true, data: { templates } });
+    // --- MODIFIED: Use apiFetch wrapper ---
+    const templates = await apiFetch(new URL("/api/v1/readme/sections", API_BASE_URL));
+    sendResponse({ ok: true, data: { templates: Array.isArray(templates) ? templates : [] } });
   } catch (error) {
     sendResponse({ ok: false, error: toErrorMessage(error) });
   }
@@ -386,7 +419,11 @@ async function handleGenerateReadme(payload: GenerateReadmeRequestPayload | unde
     return;
   }
   try {
-    const response = await generateReadmeWithApi(payload);
+    // --- MODIFIED: Use apiFetch wrapper ---
+    const response = await apiFetch(new URL("/api/v1/readme/generate", API_BASE_URL), {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
     sendResponse({ ok: true, data: response });
   } catch (error) {
     sendResponse({ ok: false, error: toErrorMessage(error) });
@@ -398,7 +435,11 @@ async function handleSaveReadme(payload: SaveReadmeRequestPayload | undefined, s
     return;
   }
   try {
-    const response = await saveReadmeWithApi(payload);
+    // --- MODIFIED: Use apiFetch wrapper ---
+    const response = await apiFetch(new URL("/api/v1/readme/save", API_BASE_URL), {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
     sendResponse({ ok: true, data: response });
   } catch (error) {
     sendResponse({ ok: false, error: toErrorMessage(error) });
@@ -410,8 +451,10 @@ async function handleFetchBranches(repositoryUrl: string | undefined, sendRespon
     return;
   }
   try {
-    const branches = await fetchBranchesWithApi(repositoryUrl);
-    sendResponse({ ok: true, data: { branches } });
+    // --- MODIFIED: Use apiFetch wrapper ---
+    const { owner, repo } = parseRepositoryUrl(repositoryUrl);
+    const json = await apiFetch(new URL(`/api/v1/readme/branches/${owner}/${repo}`, API_BASE_URL));
+    sendResponse({ ok: true, data: { branches: Array.isArray(json?.branches) ? json.branches : [] } });
   } catch (error) {
     sendResponse({ ok: false, error: toErrorMessage(error) });
   }
@@ -422,96 +465,31 @@ async function handleCreateBranch(repositoryUrl: string | undefined, branchName:
     return;
   }
   try {
-    await createBranchWithApi(repositoryUrl, branchName);
+    // --- MODIFIED: Use apiFetch wrapper ---
+    const { owner, repo } = parseRepositoryUrl(repositoryUrl);
+    await apiFetch(new URL(`/api/v1/readme/branches/${owner}/${repo}?branch_name=${encodeURIComponent(branchName)}`, API_BASE_URL), {
+      method: "POST",
+      body: JSON.stringify({})
+    });
     sendResponse({ ok: true });
   } catch (error) {
     sendResponse({ ok: false, error: toErrorMessage(error) });
   }
 }
-async function fetchReadmeSectionTemplates(): Promise<SectionTemplate[]> {
-  const accessToken = await requireAccessToken();
-  const response = await fetch(new URL("/api/v1/readme/sections", API_BASE_URL).toString(), {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    }
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to fetch section templates: ${response.status}. Response: ${errorText}`);
-  }
-  const templates = (await response.json()) as SectionTemplate[];
-  return Array.isArray(templates) ? templates : [];
-}
-async function generateReadmeWithApi(payload: GenerateReadmeRequestPayload): Promise<GenerateReadmeResponsePayload> {
-  const accessToken = await requireAccessToken();
-  const response = await fetch(new URL("/api/v1/readme/generate", API_BASE_URL).toString(), {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to generate README: ${response.status}. Response: ${errorText}`);
-  }
-  return (await response.json()) as GenerateReadmeResponsePayload;
-}
-async function saveReadmeWithApi(payload: SaveReadmeRequestPayload): Promise<SaveReadmeResponsePayload> {
-  const accessToken = await requireAccessToken();
-  const response = await fetch(new URL("/api/v1/readme/save", API_BASE_URL).toString(), {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to save README: ${response.status}. Response: ${errorText}`);
-  }
-  return (await response.json()) as SaveReadmeResponsePayload;
-}
-async function fetchBranchesWithApi(repositoryUrl: string): Promise<GithubBranchModel[]> {
-  const { owner, repo } = parseRepositoryUrl(repositoryUrl);
-  const accessToken = await requireAccessToken();
-  const response = await fetch(new URL(`/api/v1/readme/branches/${owner}/${repo}`, API_BASE_URL).toString(), {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    }
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to fetch branches: ${response.status}. Response: ${errorText}`);
-  }
-  const json = (await response.json()) as RepoBranchResponse;
-  return Array.isArray(json?.branches) ? json.branches : [];
-}
-async function createBranchWithApi(repositoryUrl: string, branchName: string): Promise<void> {
-  const { owner, repo } = parseRepositoryUrl(repositoryUrl);
-  const accessToken = await requireAccessToken();
-  const response = await fetch(new URL(`/api/v1/readme/branches/${owner}/${repo}?branch_name=${encodeURIComponent(branchName)}`, API_BASE_URL).toString(), {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({})
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to create branch: ${response.status}. Response: ${errorText}`);
-  }
-}
+
+// --- REMOVED: Redundant API functions (now handled by apiFetch) ---
+// - fetchReadmeSectionTemplates
+// - generateReadmeWithApi
+// - saveReadmeWithApi
+// - fetchBranchesWithApi
+// - createBranchWithApi
+// --- END REMOVED ---
+
 async function requireAccessToken(): Promise<string> {
   const tokens = await getStoredTokens();
   if (!tokens?.accessToken) {
+    // This will now be caught by apiFetch, but good to keep as a fallback.
+    await handleLogout("Not authenticated. Please log in.");
     throw new Error("Not authenticated");
   }
   return tokens.accessToken;
@@ -587,7 +565,6 @@ async function startAuthFlow(): Promise<void> {
     });
     const token = await Promise.race([tokenPromise, windowClosedPromise]);
     await setStoredTokens({ accessToken: token });
-    // --- MODIFICATION: Set forceRefresh to true after login ---
     await ensureRepositories(token, true);
   } finally {
     if (onUpdatedListener) chrome.tabs.onUpdated.removeListener(onUpdatedListener);
@@ -638,13 +615,13 @@ async function waitForAccessTokenFromTab(tabId: number, timeoutMs = 30_000, inte
       });
       const storage = (execResults?.[0]?.result) as Record<string, string> | null;
       if (storage) {
-        console.log("[README AI] Poll: Found localStorage:", storage);
+        // console.log("[README AI] Poll: Found localStorage:", storage);
         if (storage["access_token"]) {
-          console.log("[README AI] SUCCESS: Found key 'access_token'");
+          // console.log("[README AI] SUCCESS: Found key 'access_token'");
           return storage["access_token"];
         }
         if (storage["token"]) {
-          console.log("[README AI] SUCCESS: Found key 'token'");
+          // console.log("[README AI] SUCCESS: Found key 'token'");
           return storage["token"];
         }
       } else {
@@ -670,55 +647,63 @@ async function setStoredTokens(tokens: AuthTokens): Promise<void> {
   await chrome.storage.local.set({ authTokens: tokens });
 }
 
-// --- MODIFICATION: Updated function to use time-based cache ---
 async function ensureRepositories(accessToken: string, forceRefresh = false): Promise<StoredRepositories | undefined> {
   const cached = await getStoredRepositories();
 
-  // 1. Check if we should use the cache
   if (
     !forceRefresh &&
     cached &&
     Array.isArray(cached.repositories) &&
     cached.repositories.length > 0 &&
-    (Date.now() - cached.fetchedAt < REPO_CACHE_DURATION_MS) // Check if cache is fresh
+    (Date.now() - cached.fetchedAt < REPO_CACHE_DURATION_MS)
   ) {
     return cached;
   }
 
-  // 2. If no (or stale) cache, or if forced, fetch new data
   try {
-    const fetched = await fetchRepositoriesFromApi(accessToken);
+    // --- MODIFIED: Use apiFetch wrapper ---
+    const fetched = await fetchRepositoriesFromApi(accessToken); // Keep passing token here for the first call
     if (!fetched.repositories) {
-      return cached; // Return old cache if fetch failed
+      return cached;
     }
 
     const stored: StoredRepositories = {
       repositories: fetched.repositories,
       totalCount: fetched.totalCount,
-      fetchedAt: Date.now() // Set new timestamp
+      fetchedAt: Date.now()
     };
     await setStoredRepositories(stored);
     return stored;
   } catch (error) {
     console.error("README AI extension: failed to fetch repositories", error);
-    return cached; // Return old cache on error
+    // If auth failed, handleLogout would have already been called by apiFetch
+    return cached;
   }
 }
 
 async function fetchRepositoriesFromApi(accessToken: string): Promise<{ repositories?: UserRepository[]; totalCount?: number; }> {
-  const requestUrl = new URL("/api/v1/auth/repositories", API_BASE_URL).toString();
-  const res = await fetch(requestUrl, {
+  // --- MODIFIED: Use apiFetch wrapper ---
+  // This is the only function that needs to pass the token manually,
+  // as it's part of the auth-check flow itself.
+  const response = await fetch(new URL("/api/v1/auth/repositories", API_BASE_URL).toString(), {
     method: "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json"
     }
   });
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`Repositories endpoint failed: ${res.status}. Response: ${errorText}`);
+
+  if (response.status === 401) {
+    await handleLogout("Your session has expired. Please log in again.");
+    throw new Error("Your session has expired. Please log in again.");
   }
-  const json = (await res.json()) as { repositories?: UserRepository[]; total_count?: number };
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Repositories endpoint failed: ${response.status}. Response: ${errorText}`);
+  }
+
+  const json = (await response.json()) as { repositories?: UserRepository[]; total_count?: number };
   return {
     repositories: json.repositories ?? [],
     totalCount: json.total_count
