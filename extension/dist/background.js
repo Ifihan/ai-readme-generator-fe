@@ -550,13 +550,13 @@ async function waitForAccessTokenFromTab(tabId, timeoutMs = 30000, intervalMs = 
             });
             const storage = (execResults?.[0]?.result);
             if (storage) {
-                console.log("[README AI] Poll: Found localStorage:", storage);
+                // console.log("[README AI] Poll: Found localStorage:", storage);
                 if (storage["access_token"]) {
-                    console.log("[README AI] SUCCESS: Found key 'access_token'");
+                    // console.log("[README AI] SUCCESS: Found key 'access_token'");
                     return storage["access_token"];
                 }
                 if (storage["token"]) {
-                    console.log("[README AI] SUCCESS: Found key 'token'");
+                    // console.log("[README AI] SUCCESS: Found key 'token'");
                     return storage["token"];
                 }
             }
