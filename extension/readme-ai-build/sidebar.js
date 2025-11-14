@@ -103,7 +103,8 @@ let repoNameEl,
   successSectionEl,
   commitSuccessDetailsEl,
   refreshPageButtonEl,
-  startOverButtonEl;
+  startOverButtonEl,
+  errorSectionEl;
 
 // ---- Init ----
 document.addEventListener("DOMContentLoaded", async () => {
@@ -133,6 +134,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   commitSuccessDetailsEl = document.getElementById("commit-success-details");
   refreshPageButtonEl = document.getElementById("refresh-page-button");
   startOverButtonEl = document.getElementById("start-over-button");
+  errorSectionEl = document.getElementById("error-section");
 
   try {
     // --- THIS IS THE NEW HANDSHAKE ---
@@ -146,11 +148,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       // 2. Now that we have the repo, initialize the panel
       initializePanel();
     } else {
-      throw new Error("No active repository found.");
+      // Show error view instead of generic error
+      showErrorView();
     }
   } catch (e) {
-    setStatus(e.message || "Failed to load repository.", "error");
-    repoNameEl.textContent = "Error";
+    // Show error view for any repository loading issues
+    showErrorView();
   }
 });
 
@@ -173,6 +176,12 @@ function initializePanel() {
   downloadButtonEl.addEventListener("click", handleDownloadClick);
   saveButtonEl.addEventListener("click", handleSaveClick);
   editSectionsButtonEl.addEventListener("click", handleEditSectionsClick);
+  if (editorEl) {
+    // Keep in-memory content in sync with user edits
+    editorEl.addEventListener("input", () => {
+      editableReadme = editorEl.value || "";
+    });
+  }
   commitInputEl.addEventListener("input", () => {
     commitMessage = commitInputEl.value || DEFAULT_COMMIT_MESSAGE;
   });
@@ -365,9 +374,14 @@ async function handleSaveClick() {
   if (!currentRepo || isSaving) return;
   const branch =
     selectedBranchName || branches.find((b) => b.is_default)?.name || "main";
+  // Always capture the latest editor content at save time
+  const currentContent =
+    editorEl && typeof editorEl.value === "string"
+      ? editorEl.value
+      : editableReadme || "";
   const payload = {
     repository_url: currentRepo.html_url,
-    content: editableReadme || "",
+    content: currentContent,
     path: "README.md",
     commit_message: commitMessage || DEFAULT_COMMIT_MESSAGE,
     branch,
@@ -463,6 +477,26 @@ function showSuccessSection(branch, commitMessage) {
 
   // Clear any status messages
   setStatus("", "success");
+}
+
+function showErrorView() {
+  // Hide all other sections
+  toggleHidden(sectionsBlockEl, true);
+  toggleHidden(resultSectionEl, true);
+  toggleHidden(commitBlockEl, true);
+  toggleHidden(branchBlockEl, true);
+  toggleHidden(successSectionEl, true);
+
+  // Update header to show error state
+  if (repoNameEl) {
+    repoNameEl.textContent = "No Repository Selected";
+  }
+
+  // Hide status message
+  toggleHidden(statusEl, true);
+
+  // Show error section
+  toggleHidden(errorSectionEl, false);
 }
 
 function handleRefreshPageClick() {

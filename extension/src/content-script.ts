@@ -74,8 +74,13 @@ chrome.runtime.onMessage.addListener((message: BackgroundMessage) => {
     setCtaState("success");
     void evaluateAuthState("runtime-message");
   } else if (message.type === MSG_AUTH_FAILURE) {
-    setCtaState("error", message.error);
-    removeRepoCta();
+    // --- MODIFICATION: Handle auth failure immediately ---
+    removeRepoCta(); // Remove the repo-specific button
+    ensureCta(); // Show the main login CTA
+    // Show error on main CTA, defaulting to a helpful message
+    const error = message.error || "Your session has expired. Please log in.";
+    setCtaState("error", error);
+    // --- END MODIFICATION ---
   }
   return undefined;
 });
@@ -91,7 +96,12 @@ window.addEventListener("message", (event: MessageEvent) => {
   } else if (data.type === MSG_AUTH_SUCCESS) {
     setCtaState("success");
   } else if (data.type === MSG_AUTH_FAILURE) {
-    setCtaState("error", typeof data.payload === "string" ? data.payload : undefined);
+    // --- MODIFICATION: Handle auth failure immediately ---
+    removeRepoCta();
+    ensureCta();
+    const error = (typeof data.payload === "string" ? data.payload : undefined) || "Your session has expired. Please log in.";
+    setCtaState("error", error);
+    // --- END MODIFICATION ---
   }
 });
 
@@ -406,7 +416,16 @@ type CtaState = "idle" | "loading" | "success" | "error";
 
 function setCtaState(state: CtaState, errorMessage?: string): void {
   if (!ctaButton || !ctaMessage) {
-    return;
+    // If the CTA doesn't exist (e.g., was removed), this call might
+    // be from an auth failure. We should ensure the CTA exists if
+    // we're in an error state.
+    if (state === 'error') {
+      ensureCta();
+      // If ctaButton is still not defined after ensureCta(), then abort.
+      if (!ctaButton || !ctaMessage) return;
+    } else {
+      return;
+    }
   }
 
   ctaButton.disabled = state === "loading";
@@ -415,27 +434,29 @@ function setCtaState(state: CtaState, errorMessage?: string): void {
   ctaButton.classList.remove("readme-ai-cta__button--success", "readme-ai-cta__button--error", "readme-ai-cta__button--loading");
 
   const buttonText = ctaButton.querySelector("span");
+  if (!buttonText) return; // Should not happen if ensureCta works
 
   switch (state) {
     case "idle":
-      if (buttonText) buttonText.textContent = CTA_DEFAULT_LABEL;
+      buttonText.textContent = CTA_DEFAULT_LABEL;
       ctaMessage.textContent = "Generate polished READMEs automatically with AI-powered insights.";
       break;
     case "loading":
-      if (buttonText) buttonText.textContent = CTA_LOADING_LABEL;
+      buttonText.textContent = CTA_LOADING_LABEL;
       ctaMessage.textContent = "Connecting to README AI…";
       ctaButton.classList.add("readme-ai-cta__button--loading");
       break;
     case "success":
-      if (buttonText) buttonText.textContent = CTA_SUCCESS_LABEL;
+      buttonText.textContent = CTA_SUCCESS_LABEL;
       ctaMessage.textContent = "You can now open README AI from the extension.";
       ctaButton.classList.add("readme-ai-cta__button--success");
       ctaButton.disabled = true;
       break;
     case "error":
-      if (buttonText) buttonText.textContent = CTA_DEFAULT_LABEL;
+      buttonText.textContent = CTA_DEFAULT_LABEL; // Reset to default label to invite click
       ctaMessage.textContent = errorMessage ?? CTA_ERROR_LABEL;
       ctaButton.classList.add("readme-ai-cta__button--error");
+      ctaButton.disabled = false; // Ensure button is clickable to re-authenticate
       break;
     default:
       break;

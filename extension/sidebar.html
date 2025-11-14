@@ -505,6 +505,106 @@
         backdrop-filter: blur(8px);
       }
 
+      /* Error Section */
+      .error-content {
+        text-align: center;
+        padding: var(--spacing-xl) var(--spacing-lg);
+      }
+
+      .error-icon {
+        margin-bottom: var(--spacing-lg);
+        color: var(--text-tertiary);
+      }
+
+      .error-icon svg {
+        width: 64px;
+        height: 64px;
+      }
+
+      .error-message h3 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-lg);
+      }
+
+      .error-steps {
+        list-style: none;
+        text-align: left;
+        max-width: 480px;
+        margin: 0 auto var(--spacing-lg);
+        padding: 0;
+      }
+
+      .error-steps li {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+        padding: var(--spacing-md);
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+      }
+
+      .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: var(--primary);
+        color: white;
+        border-radius: 50%;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .step-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .step-content strong {
+        display: block;
+        color: var(--text-primary);
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .step-content p {
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+      }
+
+      .error-note {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+        text-align: left;
+        max-width: 480px;
+        margin: 0 auto;
+        padding: var(--spacing-md);
+        background: rgba(9, 105, 218, 0.1);
+        border: 1px solid rgba(9, 105, 218, 0.2);
+        border-radius: var(--radius-md);
+        color: var(--info);
+      }
+
+      .error-note svg {
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .error-note p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
       /* Success Section */
       .success-content {
         text-align: center;
@@ -720,6 +820,56 @@
               </svg>
               Create
             </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Section -->
+      <div id="error-section" class="content-section hidden">
+        <div class="section-header">
+          <h2 class="section-title">Repository Not Found</h2>
+          <p class="section-subtitle">Let's get you set up to generate a README</p>
+        </div>
+        <div class="section-content">
+          <div class="error-content">
+            <div class="error-icon">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
+              </svg>
+            </div>
+            <div class="error-message">
+              <h3>To use README AI, you need to:</h3>
+              <ol class="error-steps">
+                <li>
+                  <span class="step-number">1</span>
+                  <div class="step-content">
+                    <strong>Navigate to your own repository</strong>
+                    <p>Go to a GitHub repository that you own or have write access to</p>
+                  </div>
+                </li>
+                <li>
+                  <span class="step-number">2</span>
+                  <div class="step-content">
+                    <strong>Look for the "Try README AI" or "Generate README For ...." button</strong>
+                    <p>You'll see a purple button appear on your repository page</p>
+                  </div>
+                </li>
+                <li>
+                  <span class="step-number">3</span>
+                  <div class="step-content">
+                    <strong>Close the sidebar using the X button above. And click the Generate README button to get started</strong>
+                    <p>This will open the README AI panel for that specific repository</p>
+                  </div>
+                </li>
+              </ol>
+              <div class="error-note">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <p><strong>Note:</strong> The README AI button only appears on repositories you own. If you're viewing someone else's repository or not on a repository page, you won't see the button.</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
