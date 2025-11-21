@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to README AI</title>
+    <style>
+        :root {
+            --bg-primary: #fafbfc;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --bg-hover: #f6f8fa;
+            --text-primary: #1a1a1a;
+            --text-secondary: #586069;
+            --text-tertiary: #8b949e;
+            --primary: #8a2be2;
+            --primary-hover: #7928ca;
+            --primary-light: #a855f7;
+            --border: #e1e4e8;
+            --border-light: #f1f3f4;
+            --border-strong: #d0d7de;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+            --success: #2ea043;
+            --error: #f85149;
+            --warning: #fb8500;
+            --info: #0969da;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --radius-sm: 6px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #0d1117;
+                --bg-secondary: #161b22;
+                --bg-card: #21262d;
+                --bg-hover: #30363d;
+                --text-primary: #e6edf3;
+                --text-secondary: #8b949e;
+                --text-tertiary: #656d76;
+                --primary: #a855f7;
+                --primary-hover: #c084fc;
+                --primary-light: #d8b4fe;
+                --border: #30363d;
+                --border-light: #21262d;
+                --border-strong: #484f58;
+                --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
+                --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
+                --shadow-lg: 0 8px 24px rgba(0,0,0,0.6);
+                --success: #3fb950;
+                --error: #f85149;
+                --warning: #d29922;
+                --info: #58a6ff;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: var(--spacing-lg);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--info) 100%);
+            color: white;
+            padding: var(--spacing-xl) var(--spacing-lg);
+            text-align: center;
+        }
+
+        .header-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto var(--spacing-md);
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-sm);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .content {
+            padding: var(--spacing-xl) var(--spacing-lg);
+        }
+
+        .step {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-lg);
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .step:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-light);
+        }
+
+        .step-number {
+            position: absolute;
+            top: -12px;
+            left: var(--spacing-lg);
+            background: var(--primary);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .step h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--spacing-md);
+            padding-left: var(--spacing-md);
+        }
+
+        .step p {
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-sm);
+            line-height: 1.6;
+        }
+
+        .step p:last-child {
+            margin-bottom: 0;
+        }
+
+        .highlight {
+            background: var(--bg-hover);
+            padding: 2px 6px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .button-example {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            background: var(--primary);
+            color: white;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            box-shadow: var(--shadow-sm);
+            margin: var(--spacing-sm) 0;
+        }
+
+        .note {
+            background: rgba(9, 105, 218, 0.1);
+            border: 1px solid rgba(9, 105, 218, 0.2);
+            color: var(--info);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-top: var(--spacing-md);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+        }
+
+        .note svg {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .footer {
+            background: var(--bg-hover);
+            padding: var(--spacing-lg);
+            text-align: center;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer p {
+            color: var(--text-tertiary);
+            font-size: 14px;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-md);
+        }
+
+        .social-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .social-link:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .troubleshoot {
+            background: rgba(251, 133, 0, 0.1);
+            border: 1px solid rgba(251, 133, 0, 0.2);
+            color: var(--warning);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-top: var(--spacing-md);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+        }
+
+        .troubleshoot svg {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: var(--spacing-md);
+            }
+
+            .header {
+                padding: var(--spacing-lg) var(--spacing-md);
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: var(--spacing-lg) var(--spacing-md);
+            }
+
+            .step {
+                padding: var(--spacing-md);
+                margin-bottom: var(--spacing-md);
+            }
+
+            .step-number {
+                left: var(--spacing-md);
+            }
+
+            .step h3 {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .step {
+                padding: var(--spacing-md) var(--spacing-sm);
+            }
+
+            .step-number {
+                left: var(--spacing-sm);
+            }
+
+            .step h3 {
+                padding-left: var(--spacing-sm);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <svg class="header-icon" viewBox="0 0 220 180" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <style>
+                        .logo-icon { fill: none; stroke: currentColor; stroke-width: 3; }
+                        .logo-text { fill: currentColor; font-family: monospace; font-weight: bold; text-anchor: middle; }
+                        .logo-subtext { fill: currentColor; font-family: monospace; text-anchor: middle; opacity: 0.9; }
+                    </style>
+                </defs>
+                <path class="logo-icon" d="M40,20 H140 L180,60 V160 H40 Z"/>
+                <polyline class="logo-icon" points="140,20 140,60 180,60"/>
+                <text class="logo-text" x="110" y="90" font-size="36">AI</text>
+                <text class="logo-subtext" x="110" y="130" font-size="16">readme.md</text>
+            </svg>
+            <h1>Welcome to README AI!</h1>
+            <p>Generate professional READMEs for your GitHub repositories in seconds</p>
+        </div>
+
+        <div class="content">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Visit GitHub</h3>
+                <p>
+                    Go to <span class="highlight">github.com</span> or navigate to any GitHub repository page.
+                    Once you're on the GitHub domain, you'll see a purple button appear:
+                </p>
+                <div class="button-example">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
+                    </svg>
+                    Try README AI
+                </div>
+                <p>
+                    This button appears to new users who haven't authenticated with the extension yet.
+                </p>
+            </div>
+
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Authenticate with GitHub</h3>
+                <p>
+                    Click the <span class="highlight">"Try README AI"</span> button. This will start the authentication process
+                    and securely connect your GitHub account to the extension.
+                </p>
+                <p>
+                    During authentication, you'll be asked to authorize which repositories README AI can access.
+                    Choose the repositories you want to generate READMEs for.
+                </p>
+                <div class="note">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <p><strong>Note:</strong> You only need to authenticate once. The extension will remember your settings.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Navigate to Your Repository</h3>
+                <p>
+                    After completing authentication, go to a GitHub repository that you own and have authorized during setup.
+                    You'll now see a new button on your repository page:
+                </p>
+                <div class="button-example">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor"/>
+                    </svg>
+                    Generate README for [Your Repo]
+                </div>
+                <p>
+                    This button only appears on repositories you own and have given the extension access to.
+                </p>
+                <div class="troubleshoot">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <p><strong>Troubleshooting:</strong> If the button doesn't appear, try refreshing your browser and wait a moment. If you still don't see it, contact support using the links below.</p>
+                </div>
+            </div>
+
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3>Generate Your README</h3>
+                <p>
+                    Click the <span class="highlight">"Generate README for [Your Repo]"</span> button.
+                    This will open the README AI side panel with your repository information loaded.
+                </p>
+                <p>
+                    In the side panel:
+                </p>
+                <p>
+                    • Select the sections you want to include in your README<br>
+                    • Choose your badge style and preferences<br>
+                    • Click <span class="highlight">"Generate README"</span> to create your content<br>
+                    • Review and edit the generated content as needed<br>
+                    • Configure your commit message and target branch<br>
+                    • Click <span class="highlight">"Save to Repo"</span> to commit directly to GitHub
+                </p>
+                <div class="note">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <p><strong>Tip:</strong> You can edit the generated README before saving, and even create a new branch for your changes!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🚀 Ready to create amazing READMEs? Start by visiting GitHub!</p>
+            <p>Need help? Reach out to us:</p>
+            <div class="social-links">
+                <a href="https://x.com/ifihan_" class="social-link" target="_blank" title="Twitter">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                </a>
+                <a href="https://github.com/Ifihan" class="social-link" target="_blank" title="GitHub">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                </a>
+                <a href="https://linkedin.com/in/ifihan-olusheye" class="social-link" target="_blank" title="LinkedIn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                    </svg>
+                </a>
+                <a href="https://ifihan.com" class="social-link" target="_blank" title="Website">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
