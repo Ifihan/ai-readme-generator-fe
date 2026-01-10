@@ -28,6 +28,12 @@ echo "[pack] Copying runtime files"
 cp "$EXT_DIR/manifest.json" "$BUILD_DIR/"
 cp "$EXT_DIR/sidebar.html" "$BUILD_DIR/"
 cp "$EXT_DIR/sidebar.js" "$BUILD_DIR/"
+if [[ -f "$EXT_DIR/onboarding.html" ]]; then
+  cp "$EXT_DIR/onboarding.html" "$BUILD_DIR/"
+  echo "[pack] Included onboarding.html"
+else
+  echo "[pack] onboarding.html not found; skipping"
+fi
 
 # Copy directories: dist, shared, assets
 cp -R "$EXT_DIR/dist" "$BUILD_DIR/dist"
@@ -45,6 +51,7 @@ required=(
   "$BUILD_DIR/manifest.json"
   "$BUILD_DIR/sidebar.html"
   "$BUILD_DIR/sidebar.js"
+  "$BUILD_DIR/onboarding.html"
   "$BUILD_DIR/shared/constants.global.js"
   "$BUILD_DIR/dist/background.js"
   "$BUILD_DIR/dist/content-script.js"
