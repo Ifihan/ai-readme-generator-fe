@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security Vulnerability
+    url: mailto:victoriaolusheye@gmail.com
+    about: Please report security vulnerabilities via email (do not create a public issue)
+  - name: Backend Repository
+    url: https://github.com/Ifihan/ai-readme-generator-be
+    about: Visit the backend repository for API-related issues

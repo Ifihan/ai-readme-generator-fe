@@ -1,0 +1,162 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for AI README Generator (Frontend)
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature! We appreciate your input in making AI README Generator better.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Feature Description
+      description: A clear and concise description of the feature you'd like to see
+      placeholder: Describe the feature...
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve? What is the motivation behind this request?
+      placeholder: This feature would help with...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How would you like this feature to work? Describe the implementation approach.
+      placeholder: The feature should work by...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative solutions or features?
+      placeholder: I've also thought about...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: feature-type
+    attributes:
+      label: Feature Type
+      description: What type of feature is this?
+      options:
+        - UI/UX Enhancement
+        - New Page/Component
+        - API Integration
+        - Authentication/Authorization
+        - Performance Optimization
+        - Accessibility
+        - Internationalization (i18n)
+        - Dark Mode/Theming
+        - Mobile Responsiveness
+        - Browser Extension
+        - Documentation
+        - Developer Experience
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Critical - Blocking my workflow
+        - High - Would significantly improve my experience
+        - Medium - Nice to have
+        - Low - Minor improvement
+    validations:
+      required: true
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples or Mockups
+      description: Provide examples, mockups, wireframes, or code snippets
+      placeholder: |
+        You can drag and drop images here or paste URLs to mockups/examples
+
+        Example code or behavior:
+        ```typescript
+        // Code example
+        ```
+    validations:
+      required: false
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: User Story
+      description: Describe this feature as a user story (optional but helpful)
+      placeholder: |
+        As a [type of user],
+        I want [goal/desire],
+        So that [benefit/value]
+    validations:
+      required: false
+
+  - type: dropdown
+    id: component-area
+    attributes:
+      label: Component/Area Affected
+      description: Which part of the application would this feature affect?
+      options:
+        - Landing Page
+        - Dashboard
+        - README Generation
+        - History
+        - Settings
+        - About Page
+        - Navigation/Routing
+        - Authentication
+        - Shared Components
+        - Global (Multiple areas)
+        - Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What conditions must be met for this feature to be considered complete?
+      placeholder: |
+        - [ ] Criterion 1
+        - [ ] Criterion 2
+        - [ ] Criterion 3
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context, references, links, or information about the feature
+      placeholder: Related issues, external references, inspiration from other apps, etc.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues to ensure this feature hasn't been requested before
+          required: true
+        - label: I have provided a clear description of the feature and its benefits
+          required: true
+        - label: I am willing to help implement this feature (optional)
+          required: false
