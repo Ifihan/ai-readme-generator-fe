@@ -41,27 +41,28 @@ Before you begin contributing, please:
 ### Setting Up Your Environment
 
 1. **Fork the repository**
-   ```bash
-   # Click the "Fork" button on GitHub
-   ```
 
 2. **Clone your fork**
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/ai-readme-generator-fe.git
    cd ai-readme-generator-fe
    ```
 
 3. **Add upstream remote**
+
    ```bash
    git remote add upstream https://github.com/Ifihan/ai-readme-generator-fe.git
    ```
 
 4. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 5. **Run the development server**
+
    ```bash
    npm start
    # or
@@ -75,7 +76,7 @@ Before you begin contributing, please:
 
 ### Environment Variables
 
-Create a `.env` file based on `.env.example` if needed for local development.
+Create a `.env` file based on `.environment.ts` in the environment folder if needed for local development.
 
 ## Project Structure
 
@@ -111,6 +112,7 @@ We welcome various types of contributions:
 ### Workflow
 
 1. **Create a new branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    # or
@@ -118,12 +120,14 @@ We welcome various types of contributions:
    ```
 
 2. **Make your changes**
+
    - Write clean, readable code
    - Follow the code style guidelines
    - Add tests for new features
    - Update documentation as needed
 
 3. **Test your changes**
+
    ```bash
    npm test           # Run unit tests
    npm run build      # Build the project
@@ -131,12 +135,14 @@ We welcome various types of contributions:
    ```
 
 4. **Commit your changes**
+
    ```bash
    git add .
    git commit -m "feat: add new feature"
    ```
 
 5. **Push to your fork**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -192,7 +198,7 @@ We welcome various types of contributions:
 
 We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
 
-```
+```bash
 <type>(<scope>): <subject>
 
 <body>
@@ -260,10 +266,11 @@ test(auth): add unit tests for auth service
 
 - Delete your feature branch
 - Update your local repository
-  ```bash
+
+```bash
   git checkout main
   git pull upstream main
-  ```
+```
 
 ## Reporting Bugs
 
@@ -319,7 +326,6 @@ Contributors will be recognized:
 
 - In the GitHub contributors page
 - In release notes for significant contributions
-- On our project website (coming soon)
 
 ## License
 
